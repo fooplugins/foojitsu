@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root">
+		<div id="child-1" class="child"></div>
+		<div id="child-2" class="child"></div>
+		<div id="child-3" class="child"></div>
+	</div>
+	<div id="child-4" class="child"></div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	QUnit.module('FooJitsu:ctor');
+	QUnit.test('initialize without "new" keyword', function (assert) {
+		var $root = FooJitsu('#root');
+		assert.ok($root instanceof FooJitsu, 'instanceof FooJitsu');
+	});
+	QUnit.test('initialize empty (no args)', function (assert) {
+		var $empty = FooJitsu();
+		assert.equal($empty.length, 0, 'empty length');
+		assert.equal($empty.context, document, 'empty context');
+	});
+	QUnit.test('initialize using a selector', function (assert) {
+		var $root = FooJitsu('#root');
+		assert.equal($root.length, 1, 'element length');
+		assert.equal($root[0], document.querySelector('#root'), 'element @ index 0');
+	});
+	QUnit.test('initialize using a selector and context', function (assert) {
+		var elements = document.querySelectorAll('#root .child'),
+				$children = FooJitsu('.child', document.querySelector('#root'));
+		assert.equal($children.length, 3, 'element length');
+		assert.equal($children[0], elements[0], 'element @ index 0');
+		assert.equal($children[1], elements[1], 'element @ index 1');
+		assert.equal($children[2], elements[2], 'element @ index 2');
+	});
+	QUnit.test('initialize using an element', function (assert) {
+		var element = document.querySelector('#root'),
+				$root = FooJitsu(element);
+		assert.equal($root.length, 1, 'element length');
+		assert.equal($root[0], element, 'element @ index 0');
+	});
+	QUnit.test('initialize using an element array', function (assert) {
+		var elements = document.querySelectorAll('.child'),
+				$children = FooJitsu(elements);
+		assert.equal($children.length, 4, 'element length');
+		assert.equal($children[0], elements[0], 'element @ index 0');
+		assert.equal($children[1], elements[1], 'element @ index 1');
+		assert.equal($children[2], elements[2], 'element @ index 2');
+		assert.equal($children[3], elements[3], 'element @ index 3');
+	});
+	QUnit.test('initialize using a function', function(assert){
+		var done = assert.async();
+		FooJitsu(function($){
+			assert.ok(true, 'callback executed');
+			assert.equal($, FooJitsu, 'arg1 is FooJitsu');
+			done();
+		});
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root">
+		<div id="child-1" class="child"></div>
+		<div id="child-2" class="child"></div>
+		<div id="child-3" class="child"></div>
+	</div>
+	<div id="child-4" class="child"></div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	QUnit.module('FooJitsu.is');
+	QUnit.test('self', function(assert){
+		var $root = FooJitsu('#root');
+		assert.ok(FooJitsu.is.self($root), 'self($root)');
+		assert.notOk(FooJitsu.is.self({}), 'self(object)');
+		assert.notOk(FooJitsu.is.self('string'), 'self(string)');
+		assert.notOk(FooJitsu.is.self(false), 'self(bool)');
+		assert.notOk(FooJitsu.is.self(1), 'self(number)');
+		assert.notOk(FooJitsu.is.self([]), 'self(array)');
+		assert.notOk(FooJitsu.is.self(null), 'self(null)');
+		assert.notOk(FooJitsu.is.self(undefined), 'self(undefined)');
+	});
+	QUnit.test('defined', function(assert){
+		assert.ok(FooJitsu.is.defined({}), 'defined(object)');
+		assert.ok(FooJitsu.is.defined('string'), 'defined(string)');
+		assert.ok(FooJitsu.is.defined(false), 'defined(bool)');
+		assert.ok(FooJitsu.is.defined(1), 'defined(number)');
+		assert.ok(FooJitsu.is.defined([]), 'defined(array)');
+		assert.ok(FooJitsu.is.defined(null), 'defined(null)');
+		assert.notOk(FooJitsu.is.defined(undefined), 'defined(undefined)');
+	});
+	QUnit.test('undef', function(assert){
+		assert.notOk(FooJitsu.is.undef({}), 'undef(object)');
+		assert.notOk(FooJitsu.is.undef('string'), 'undef(string)');
+		assert.notOk(FooJitsu.is.undef(false), 'undef(bool)');
+		assert.notOk(FooJitsu.is.undef(1), 'undef(number)');
+		assert.notOk(FooJitsu.is.undef([]), 'undef(array)');
+		assert.notOk(FooJitsu.is.undef(null), 'undef(null)');
+		assert.ok(FooJitsu.is.undef(undefined), 'undef(undefined)');
+	});
+	QUnit.test('string', function(assert){
+		assert.notOk(FooJitsu.is.string({}), 'string(object)');
+		assert.notOk(FooJitsu.is.string(undefined), 'string(undefined)');
+		assert.notOk(FooJitsu.is.string(false), 'string(bool)');
+		assert.notOk(FooJitsu.is.string(1), 'string(number)');
+		assert.notOk(FooJitsu.is.string([]), 'string(array)');
+		assert.notOk(FooJitsu.is.string(null), 'string(null)');
+		assert.ok(FooJitsu.is.string('string'), 'string(string)');
+	});
+	QUnit.test('number', function(assert){
+		assert.notOk(FooJitsu.is.number({}), 'number(object)');
+		assert.notOk(FooJitsu.is.number(undefined), 'number(undefined)');
+		assert.notOk(FooJitsu.is.number(false), 'number(bool)');
+		assert.notOk(FooJitsu.is.number('string'), 'number(string)');
+		assert.notOk(FooJitsu.is.number([]), 'number(array)');
+		assert.notOk(FooJitsu.is.number(null), 'number(null)');
+		assert.ok(FooJitsu.is.number(1), 'number(number)');
+	});
+	QUnit.test('array', function(assert){
+		assert.notOk(FooJitsu.is.array({}), 'array(object)');
+		assert.notOk(FooJitsu.is.array(undefined), 'array(undefined)');
+		assert.notOk(FooJitsu.is.array(false), 'array(bool)');
+		assert.notOk(FooJitsu.is.array('string'), 'array(string)');
+		assert.notOk(FooJitsu.is.array(1), 'array(number)');
+		assert.notOk(FooJitsu.is.array(null), 'array(null)');
+		assert.ok(FooJitsu.is.array([]), 'array(array)');
+	});
+	QUnit.test('arrayLike', function(assert){
+		assert.notOk(FooJitsu.is.arrayLike({}), 'arrayLike(object)');
+		assert.notOk(FooJitsu.is.arrayLike(undefined), 'arrayLike(undefined)');
+		assert.notOk(FooJitsu.is.arrayLike(false), 'arrayLike(bool)');
+		assert.notOk(FooJitsu.is.arrayLike(1), 'arrayLike(number)');
+		assert.notOk(FooJitsu.is.arrayLike(null), 'arrayLike(null)');
+		var $root = FooJitsu('#root');
+		assert.ok(FooJitsu.is.arrayLike($root), 'arrayLike($root)');
+		assert.ok(FooJitsu.is.arrayLike('string'), 'arrayLike(string)');
+		assert.ok(FooJitsu.is.arrayLike(document.querySelectorAll('.child')), 'arrayLike(nodeList)');
+		assert.ok(FooJitsu.is.arrayLike([]), 'arrayLike(array)');
+	});
+	QUnit.test('boolean', function(assert){
+		assert.notOk(FooJitsu.is.boolean({}), 'boolean(object)');
+		assert.notOk(FooJitsu.is.boolean(undefined), 'boolean(undefined)');
+		assert.notOk(FooJitsu.is.boolean([]), 'boolean(array)');
+		assert.notOk(FooJitsu.is.boolean('string'), 'boolean(string)');
+		assert.notOk(FooJitsu.is.boolean(1), 'boolean(number)');
+		assert.notOk(FooJitsu.is.boolean(null), 'boolean(null)');
+		assert.ok(FooJitsu.is.boolean(false), 'boolean(false)');
+		assert.ok(FooJitsu.is.boolean(true), 'boolean(true)');
+	});
+	QUnit.test('fn', function(assert){
+		assert.notOk(FooJitsu.is.fn({}), 'fn(object)');
+		assert.notOk(FooJitsu.is.fn(undefined), 'fn(undefined)');
+		assert.notOk(FooJitsu.is.fn([]), 'fn(array)');
+		assert.notOk(FooJitsu.is.fn('string'), 'fn(string)');
+		assert.notOk(FooJitsu.is.fn(1), 'fn(number)');
+		assert.notOk(FooJitsu.is.fn(null), 'fn(null)');
+		assert.ok(FooJitsu.is.fn(FooJitsu.noop), 'fn(function)');
+	});
+	QUnit.test('object', function(assert){
+		assert.notOk(FooJitsu.is.object(FooJitsu.noop), 'object(function)');
+		assert.notOk(FooJitsu.is.object(undefined), 'object(undefined)');
+		assert.notOk(FooJitsu.is.object([]), 'object(array)');
+		assert.notOk(FooJitsu.is.object('string'), 'object(string)');
+		assert.notOk(FooJitsu.is.object(1), 'object(number)');
+		assert.notOk(FooJitsu.is.object(null), 'object(null)');
+		assert.ok(FooJitsu.is.object({}), 'object(object)');
+	});
+	QUnit.test('hash', function(assert){
+		assert.notOk(FooJitsu.is.hash(FooJitsu.noop), 'hash(function)');
+		assert.notOk(FooJitsu.is.hash(undefined), 'hash(undefined)');
+		assert.notOk(FooJitsu.is.hash([]), 'hash(array)');
+		assert.notOk(FooJitsu.is.hash('string'), 'hash(string)');
+		assert.notOk(FooJitsu.is.hash(1), 'hash(number)');
+		assert.notOk(FooJitsu.is.hash(null), 'hash(null)');
+		assert.ok(FooJitsu.is.hash({}), 'hash(object)');
+	});
+	QUnit.test('element', function(assert){
+		assert.notOk(FooJitsu.is.element(FooJitsu.noop), 'element(function)');
+		assert.notOk(FooJitsu.is.element(undefined), 'element(undefined)');
+		assert.notOk(FooJitsu.is.element([]), 'element(array)');
+		assert.notOk(FooJitsu.is.element('string'), 'element(string)');
+		assert.notOk(FooJitsu.is.element(1), 'element(number)');
+		assert.notOk(FooJitsu.is.element(null), 'element(null)');
+		assert.notOk(FooJitsu.is.element({}), 'element(object)');
+		assert.ok(FooJitsu.is.element(document.querySelector('#root')), 'element(element)');
+	});
+	QUnit.test('selector', function(assert){
+		assert.notOk(FooJitsu.is.selector(FooJitsu.noop), 'selector(function)');
+		assert.notOk(FooJitsu.is.selector(undefined), 'selector(undefined)');
+		assert.notOk(FooJitsu.is.selector([]), 'selector(array)');
+		assert.notOk(FooJitsu.is.selector(1), 'selector(number)');
+		assert.notOk(FooJitsu.is.selector(null), 'selector(null)');
+		assert.notOk(FooJitsu.is.selector({}), 'selector(object)');
+		assert.ok(FooJitsu.is.selector('.child'), 'selector(".child")');
+		assert.ok(FooJitsu.is.selector('#root .child'), 'selector("#root .child")');
+		assert.ok(FooJitsu.is.selector('#root .child:not(#child-1)'), 'selector("#root .child:not(#child-1)")');
+	});
+	QUnit.test('html', function(assert){
+		assert.notOk(FooJitsu.is.html(FooJitsu.noop), 'html(function)');
+		assert.notOk(FooJitsu.is.html(undefined), 'html(undefined)');
+		assert.notOk(FooJitsu.is.html([]), 'html(array)');
+		assert.notOk(FooJitsu.is.html(1), 'html(number)');
+		assert.notOk(FooJitsu.is.html(null), 'html(null)');
+		assert.notOk(FooJitsu.is.html({}), 'html(object)');
+		assert.notOk(FooJitsu.is.html('<div>No closing'), 'html("<div>No closing")');
+		assert.ok(FooJitsu.is.html('<div/>'), 'html("<div/>")');
+		assert.ok(FooJitsu.is.html('<p>some text and a <a>link</a></p>'), 'html("<p>some text and a <a>link</a></p>")');
+	});
+	QUnit.test('any', function(assert){
+		assert.notOk(FooJitsu.is.any('test', FooJitsu.noop), 'any("test", function)');
+		assert.notOk(FooJitsu.is.any('test', undefined), 'any("test", undefined)');
+		assert.notOk(FooJitsu.is.any('test', []), 'any("test", array)');
+		assert.notOk(FooJitsu.is.any('test', 1), 'any("test", number)');
+		assert.notOk(FooJitsu.is.any('test', null), 'any("test", null)');
+		assert.notOk(FooJitsu.is.any('test', {}), 'any("test", object)');
+		assert.ok(FooJitsu.is.any('test', ['test']), 'any("test", array["test"])');
+		assert.ok(FooJitsu.is.any('test', {"test": true}), 'any("test", object{"test":true})');
+	});
+</script>
+</body>
+</html>

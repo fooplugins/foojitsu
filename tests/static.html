@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root">
+		<div id="child-1" class="child"></div>
+		<div id="child-2" class="child"></div>
+		<div id="child-3" class="child"></div>
+	</div>
+	<div id="child-4" class="child"></div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	QUnit.module('FooJitsu');
+	QUnit.test('ready', function(assert){
+		var done = assert.async();
+		FooJitsu.ready(function($){
+			assert.ok(true, 'Callback executed');
+			assert.equal($, FooJitsu, 'First argument is FooJitsu');
+			done();
+		});
+	});
+	QUnit.test('getContext', function(assert){
+		function testGetContext(){
+			return FooJitsu.getContext(Array.prototype.slice.call(arguments));
+		}
+		var ctx = testGetContext('#root'), el;
+		assert.equal(ctx, document, 'ctor(selector)');
+		ctx = testGetContext('.child', (el = document.querySelector('#root')));
+		assert.equal(ctx, el, 'ctor(selector, ctx)');
+		ctx = testGetContext(el);
+		assert.equal(ctx, document, 'ctor(element)');
+		ctx = testGetContext(document.querySelectorAll('.child'));
+		assert.equal(ctx, document, 'ctor(array)');
+	});
+	QUnit.test('extend', function(assert){
+		function getObjects(){
+			return {
+				obj1: {
+					number: 1,
+					string: 'one',
+					bool: false,
+					deep: {
+						exists: true
+					},
+					arr: [1,2,3]
+				},
+				obj2: {
+					number: 2,
+					deep: {
+					}
+				},
+				obj3: {
+					bool: true,
+					arr: [4,5,6]
+				}
+			}
+		}
+		var obj = getObjects();
+		var m = FooJitsu.extend(obj.obj1, obj.obj2, obj.obj3);
+		assert.equal(m, obj.obj1, 'extend(obj1, obj2, obj3) - return value and target equal');
+		assert.equal(m.number, 2, 'extend(obj1, obj2, obj3) - number');
+		assert.equal(m.string, 'one', 'extend(obj1, obj2, obj3) - string');
+		assert.equal(m.bool, true, 'extend(obj1, obj2, obj3) - bool');
+		assert.propEqual(m.deep, obj.obj2.deep, 'extend(obj1, obj2, obj3) - deep');
+		assert.deepEqual(m.arr, obj.obj3.arr, 'extend(obj1, obj2, obj3) - arr');
+
+		m = FooJitsu.extend(true, obj.obj1, obj.obj2, obj.obj3);
+		assert.equal(m, obj.obj1, 'extend(true, obj1, obj2, obj3) - return value and target equal');
+		assert.equal(m.number, 2, 'extend(true, obj1, obj2, obj3) - number');
+		assert.equal(m.string, 'one', 'extend(true, obj1, obj2, obj3) - string');
+		assert.equal(m.bool, true, 'extend(true, obj1, obj2, obj3) - bool');
+		assert.propEqual(m.deep, obj.obj1.deep, 'extend(true, obj1, obj2, obj3) - deep');
+		assert.deepEqual(m.arr, obj.obj3.arr, 'extend(true, obj1, obj2, obj3) - arr');
+	});
+	QUnit.test('trim', function(assert){
+		assert.equal(FooJitsu.trim(' '), '', 'trim(" ")');
+		assert.equal(FooJitsu.trim(' before'), 'before', 'trim(" before")');
+		assert.equal(FooJitsu.trim('after '), 'after', 'trim("after ")');
+		assert.equal(FooJitsu.trim(' wrapped '), 'wrapped', 'trim(" wrapped ")');
+		assert.equal(FooJitsu.trim('  double  '), 'double', 'trim("  double  ")');
+		assert.equal(FooJitsu.trim(' only start and end '), 'only start and end', 'trim(" only start and end ")');
+		assert.equal(FooJitsu.trim('  replace multiple  spaces ', true), 'replace multiple spaces', 'trim("  replace multiple  spaces ")');
+	});
+	QUnit.test('makeArray', function(assert){
+		var elements = document.querySelectorAll('.child'),
+				$children = FooJitsu('.child'),
+				made = FooJitsu.makeArray(elements);
+		assert.ok('[object Array]' === Object.prototype.toString.call(made), 'makeArray(elements) - return array');
+		assert.equal(made.length, elements.length, 'makeArray(elements) - length');
+		assert.equal(made[0], elements[0], 'makeArray(elements) - element @ index 0');
+		assert.equal(made[1], elements[1], 'makeArray(elements) - element @ index 1');
+		assert.equal(made[2], elements[2], 'makeArray(elements) - element @ index 2');
+		assert.equal(made[3], elements[3], 'makeArray(elements) - element @ index 3');
+
+		made = FooJitsu.makeArray($children);
+		assert.ok('[object Array]' === Object.prototype.toString.call(made), 'makeArray($children) - return array');
+		assert.equal(made.length, $children.length, 'makeArray($children) - length');
+		assert.equal(made[0], $children[0], 'makeArray($children) - element @ index 0');
+		assert.equal(made[1], $children[1], 'makeArray($children) - element @ index 1');
+		assert.equal(made[2], $children[2], 'makeArray($children) - element @ index 2');
+		assert.equal(made[3], $children[3], 'makeArray($children) - element @ index 3');
+	});
+	QUnit.test('split', function(assert){
+		var result = FooJitsu.split('one two three');
+		assert.ok('[object Array]' === Object.prototype.toString.call(result), 'split("one two three") - return array');
+		assert.equal(result.length, 3, 'split("one two three") - length');
+		assert.equal(result[0], 'one', 'split("one two three") - string @ index 0');
+		assert.equal(result[1], 'two', 'split("one two three") - string @ index 1');
+		assert.equal(result[2], 'three', 'split("one two three") - string @ index 2');
+
+		result = FooJitsu.split(' one   two  three ');
+		assert.ok('[object Array]' === Object.prototype.toString.call(result), 'split(" one   two  three ") - return array');
+		assert.equal(result.length, 3, 'split(" one   two  three ") - length');
+		assert.equal(result[0], 'one', 'split(" one   two  three ") - string @ index 0');
+		assert.equal(result[1], 'two', 'split(" one   two  three ") - string @ index 1');
+		assert.equal(result[2], 'three', 'split(" one   two  three ") - string @ index 2');
+	});
+	QUnit.test('parseAttrValue', function(assert){
+		assert.equal(FooJitsu.parseAttrValue('1'), 1, 'parseAttrValue("1") - number');
+		assert.equal(FooJitsu.parseAttrValue('1px'), '1px', 'parseAttrValue("1px") - string');
+		assert.equal(FooJitsu.parseAttrValue('false'), false, 'parseAttrValue("false") - bool');
+		assert.equal(FooJitsu.parseAttrValue('FALSE'), false, 'parseAttrValue("FALSE") - bool');
+		assert.equal(FooJitsu.parseAttrValue('true'), true, 'parseAttrValue("true") - bool');
+		assert.equal(FooJitsu.parseAttrValue('TRUE'), true, 'parseAttrValue("TRUE") - bool');
+		assert.propEqual(FooJitsu.parseAttrValue('{"json": true}'), {json: true}, 'parseAttrValue("{json:true}") - json');
+	});
+	QUnit.test('each', function(assert){
+		assert.expect(32);
+		var target = ['one','two','three','four'];
+		FooJitsu.each(target, function(i, value){
+			assert.ok(true, 'each(array) - callback executed');
+			assert.equal(value, target[i], 'each(array) - value matched')
+		});
+		target = document.querySelectorAll('.child');
+		FooJitsu.each(target, function(i, value){
+			assert.ok(true, 'each(nodeList) - callback executed');
+			assert.equal(value, target[i], 'each(nodeList) - value matched')
+		});
+		target = FooJitsu('.child');
+		FooJitsu.each(target, function(i, value){
+			assert.ok(true, 'each(FooJitsu) - callback executed');
+			assert.equal(value, target[i], 'each(FooJitsu) - value matched')
+		});
+		target = {
+			one: 1,
+			two: 2,
+			three: 3,
+			four: 4
+		};
+		FooJitsu.each(target, function(name, value){
+			assert.ok(true, 'each(object) - callback executed');
+			assert.equal(value, target[name], 'each(object) - value matched')
+		});
+	});
+	QUnit.test('toCamelCase', function(assert){
+		assert.equal(FooJitsu.toCamelCase('word'), 'word', 'toCamelCase("word")');
+		assert.equal(FooJitsu.toCamelCase('single space'), 'singleSpace', 'toCamelCase("single space")');
+		assert.equal(FooJitsu.toCamelCase(' multiple  spaces '), 'multipleSpaces', 'toCamelCase(" multiple  spaces ")');
+		assert.equal(FooJitsu.toCamelCase(' multiple  spaces and words'), 'multipleSpacesAndWords', 'toCamelCase(" multiple  spaces and words")');
+		assert.equal(FooJitsu.toCamelCase('Capitalized Words'), 'capitalizedWords', 'toCamelCase("Capitalized Words")');
+		assert.equal(FooJitsu.toCamelCase('hyphenated-words'), 'hyphenatedWords', 'toCamelCase("hyphenated-words")');
+		assert.equal(FooJitsu.toCamelCase('Hyphenated-with spaces'), 'hyphenatedWithSpaces', 'toCamelCase("Hyphenated-with spaces")');
+	});
+	QUnit.test('toHyphen', function(assert){
+		assert.equal(FooJitsu.toHyphen('word'), 'word', 'toHyphen("word")');
+		assert.equal(FooJitsu.toHyphen('single space'), 'single-space', 'toHyphen("single space")');
+		assert.equal(FooJitsu.toHyphen(' multiple  spaces '), 'multiple-spaces', 'toHyphen(" multiple  spaces ")');
+		assert.equal(FooJitsu.toHyphen(' multiple  spaces and words'), 'multiple-spaces-and-words', 'toHyphen(" multiple  spaces and words")');
+		assert.equal(FooJitsu.toHyphen('Capitalized Words'), 'capitalized-words', 'toHyphen("Capitalized Words")');
+		assert.equal(FooJitsu.toHyphen('hyphenated-words'), 'hyphenated-words', 'toHyphen("hyphenated-words")');
+		assert.equal(FooJitsu.toHyphen('Hyphenated-with spaces'), 'hyphenated-with-spaces', 'toHyphen("Hyphenated-with spaces")');
+	});
+	QUnit.test('isChildOf', function(assert){
+		var root = document.querySelector('#root'),
+				child1 = document.querySelector('#child-1'),
+				child4 = document.querySelector('#child-4');
+		assert.ok(FooJitsu.isChildOf(child1, root), 'isChildOf(child, root)');
+		assert.notOk(FooJitsu.isChildOf(child4, root), 'isChildOf(notChild, root)');
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root" data-string="test" data-bool="true" data-number="35" data-json='{"string": "test", "bool": true, "number": 35}'></div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	var defaultData = {"string": "test", "bool": true, "number": 35, "json": {"string": "test", "bool": true, "number": 35}};
+	QUnit.module('FooJitsu.cache');
+	QUnit.test('clear', function(assert){
+		var root = document.querySelector('#root'),
+				data = FooJitsu.cache.get(root);
+		assert.propEqual(data, defaultData, 'data cached');
+
+		FooJitsu.cache.clear(root);
+		data = FooJitsu.cache.get(root);
+		assert.propEqual(data, {}, 'clear(root)');
+
+		FooJitsu.cache.clear(root, true);
+		data = FooJitsu.cache.get(root);
+		assert.propEqual(data, defaultData, 'clear(root, true)');
+		FooJitsu.cache.clear();
+		assert.propEqual(FooJitsu.cache.data, {}, 'clear()');
+	});
+	QUnit.test('uid', function(assert){
+		var root = document.querySelector('#root'),
+				id = FooJitsu.cache.uid(root);
+		assert.ok(typeof id === 'number', 'id is number');
+		assert.propEqual(FooJitsu.cache.data[id], {}, 'data attributes not cached');
+		id = FooJitsu.cache.uid(root, true);
+		assert.propEqual(FooJitsu.cache.data[id], defaultData, 'data attributes cached');
+		FooJitsu.cache.clear();
+		assert.propEqual(FooJitsu.cache.data, {}, 'cache cleared');
+	});
+	QUnit.test('get', function(assert){
+		var root = document.querySelector('#root');
+
+		assert.equal(FooJitsu.cache.get(root, 'string'), defaultData.string, 'get(root, "string")');
+		assert.equal(FooJitsu.cache.get(root, 'bool'), defaultData.bool, 'get(root, "bool")');
+		assert.equal(FooJitsu.cache.get(root, 'number'), defaultData.number, 'get(root, "number")');
+		assert.propEqual(FooJitsu.cache.get(root, 'json'), defaultData.json, 'get(root, "json")');
+		assert.propEqual(FooJitsu.cache.get(root), defaultData, 'get(root)');
+
+		FooJitsu.cache.clear();
+		assert.propEqual(FooJitsu.cache.data, {}, 'cache cleared');
+	});
+	QUnit.test('set', function(assert){
+		var root = document.querySelector('#root'),
+				id = FooJitsu.cache.uid(root);
+
+		FooJitsu.cache.set(root, 'test', 'a string');
+		assert.equal(FooJitsu.cache.data[id].test, 'a string', 'set(root, "test", "a string")');
+
+		FooJitsu.cache.set(root, 'test', false);
+		assert.equal(FooJitsu.cache.data[id].test, false, 'set(root, "test", false)');
+
+		FooJitsu.cache.set(root, 'test2', 'second');
+		assert.equal(FooJitsu.cache.data[id].test, false, 'set(root, "test", false)');
+		assert.equal(FooJitsu.cache.data[id].test2, 'second', 'set(root, "test", "second")');
+
+		FooJitsu.cache.set(root, {
+			test: 'first',
+			test3: 'third'
+		});
+		assert.equal(FooJitsu.cache.data[id].test, 'first', 'set(root, {test:"first",test3:"third"})');
+		assert.equal(FooJitsu.cache.data[id].test2, 'second', 'set(root, {test:"first",test3:"third"})');
+		assert.equal(FooJitsu.cache.data[id].test3, 'third', 'set(root, {test:"first",test3:"third"})');
+
+		FooJitsu.cache.clear();
+		assert.propEqual(FooJitsu.cache.data, {}, 'cache cleared');
+	});
+	QUnit.test('clear:events', function(assert){
+		var root = document.querySelector('#root'),
+				id = FooJitsu.cache.uid(root);
+		FooJitsu.cache._events[id] = [{"index": 0},{"index": 1},{"index": 2}];
+		FooJitsu.cache.clear(root, '__events__');
+		assert.equal(FooJitsu.cache._events[id], undefined, 'events removed');
+	});
+	QUnit.test('get:events', function(assert){
+		var root = document.querySelector('#root'),
+				id = FooJitsu.cache.uid(root),
+				events = FooJitsu.cache.get(root, '__events__');
+		assert.ok('[object Array]' === Object.prototype.toString.call(events), 'events is array');
+		events.push({"test": true});
+		assert.equal(FooJitsu.cache._events[id].length, events.length, 'events returned and modified');
+		assert.equal(FooJitsu.cache._events[id][0], events[0], 'events items equal');
+
+		FooJitsu.cache.clear(root, '__events__');
+		assert.equal(FooJitsu.cache._events[id], undefined, 'events removed');
+	});
+	QUnit.test('set:events', function(assert){
+		var root = document.querySelector('#root'),
+				id = FooJitsu.cache.uid(root),
+				events = [{"index": 0},{"index": 1},{"index": 2}];
+
+		FooJitsu.cache.set(root, '__events__', events);
+		assert.equal(FooJitsu.cache._events[id].length, events.length, 'events set');
+		assert.equal(FooJitsu.cache._events[id][0], events[0], 'event @ index 0');
+		assert.equal(FooJitsu.cache._events[id][1], events[1], 'event @ index 1');
+		assert.equal(FooJitsu.cache._events[id][2], events[2], 'event @ index 2');
+
+		FooJitsu.cache.set(root, '__events__', []);
+		assert.equal(FooJitsu.cache._events[id], undefined, 'empty array removed events');
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root">
+		<div id="child-1" class="child"></div>
+		<div id="child-2" class="child"></div>
+		<div id="child-3" class="child"></div>
+	</div>
+	<div id="child-4" class="child"></div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	QUnit.module('FooJitsu.deferred');
+	QUnit.test('then:resolve', function(assert){
+		assert.expect(2);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved');
+				}, 100);
+			});
+		}
+		async().then(function(value){
+			assert.ok(true, 'resolve executed');
+			assert.equal(value, 'resolved', 'resolve value');
+			done();
+		}, function(){
+			assert.ok(false, 'error thrown');
+			done();
+		});
+	});
+	QUnit.test('then:reject', function(assert){
+		assert.expect(3);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.reject(new Error('rejected'));
+				}, 100);
+			});
+		}
+		async().then(function(){
+			assert.ok(false, 'resolve executed');
+			done();
+		}, function(err){
+			assert.ok(true, 'error thrown');
+			assert.ok(err instanceof Error, 'err instanceof Error');
+			assert.equal(err.message, 'rejected', 'error message');
+			done();
+		});
+	});
+	QUnit.test('then:progress', function(assert){
+		assert.expect(5);
+		var done = assert.async(), expected = 0;
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				var count = 0;
+				function check(){
+					count++;
+					if (count === 4) d.resolve('resolved');
+					else {
+						d.notify(count);
+						setTimeout(check, 100);
+					}
+				}
+				setTimeout(check, 100);
+			});
+		}
+		async().then(function(value){
+			assert.ok(true, 'resolve executed');
+			assert.equal(value, 'resolved', 'resolve value');
+			done();
+		}, function(){
+			assert.ok(false, 'error thrown');
+			done();
+		}, function(progress){
+			expected++;
+			assert.equal(progress, expected, 'progress ' + expected);
+		});
+	});
+	QUnit.test('done:resolve', function(assert){
+		assert.expect(2);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved');
+				}, 100);
+			});
+		}
+		async()
+				.done(function(result){
+					assert.ok(true, 'done executed');
+					assert.equal(result, 'resolved', 'resolve value');
+					done();
+				})
+				.fail(function(){
+					assert.ok(false, 'reject executed');
+					done();
+				});
+	});
+	QUnit.test('done:reject', function(assert){
+		assert.expect(3);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.reject(new Error('rejected'));
+				}, 100);
+			});
+		}
+		async()
+				.done(function(){
+					assert.ok(false, 'done executed');
+					done();
+				}).fail(function(err){
+					assert.ok(true, 'reject executed');
+					assert.ok(err instanceof Error, 'err instanceof Error');
+					assert.equal(err.message, 'rejected', 'error message');
+					done();
+				});
+	});
+
+	QUnit.test('fail:resolve', function(assert){
+		assert.expect(2);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved');
+				}, 100);
+			});
+		}
+		async()
+				.then(function(result){
+					assert.ok(true, 'resolve executed');
+					assert.equal(result, 'resolved', 'resolve value');
+					done();
+				})
+				.fail(function(){
+					assert.ok(false, 'reject executed');
+					done();
+				});
+	});
+	QUnit.test('fail:reject', function(assert){
+		assert.expect(3);
+		var done = assert.async();
+		function async(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.reject(new Error('rejected'));
+				}, 100);
+			});
+		}
+		async()
+				.then(function(){
+					assert.ok(false, 'resolve executed');
+					done();
+				})
+				.fail(function(err){
+					assert.ok(true, 'reject executed');
+					assert.ok(err instanceof Error, 'err instanceof Error');
+					assert.equal(err.message, 'rejected', 'error message');
+					done();
+				});
+	});
+	QUnit.test('when:resolve', function(assert){
+		assert.expect(4);
+		var done = assert.async();
+		function async1(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved 1');
+				}, 100);
+			});
+		}
+		function async2(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved 2');
+				}, 100);
+			});
+		}
+		FooJitsu.when(async1(), async2())
+				.then(function(results){
+					assert.ok(true, 'resolve executed');
+					assert.ok('[object Array]' === Object.prototype.toString.call(results), 'results is array');
+					assert.equal(results[0], 'resolved 1', 'result @ index 0');
+					assert.equal(results[1], 'resolved 2', 'result @ index 1');
+					done();
+				})
+				.fail(function(){
+					assert.ok(false, 'reject executed');
+					done();
+				});
+	});
+	QUnit.test('when:reject', function(assert){
+		assert.expect(3);
+		var done = assert.async();
+		function async1(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.resolve('resolved 1');
+				}, 150);
+			});
+		}
+		function async2(){
+			return FooJitsu.Deferred(function(d){
+				setTimeout(function(){
+					d.reject(new Error('rejected 2'));
+				}, 100);
+			});
+		}
+		FooJitsu.when(async1(), async2())
+				.then(function(){
+					assert.ok(false, 'resolve executed');
+					done();
+				})
+				.fail(function(err){
+					assert.ok(true, 'reject executed');
+					assert.ok(err instanceof Error, 'err instanceof Error');
+					assert.equal(err.message, 'rejected 2', 'error message');
+					done();
+				});
+	});
+</script>
+</body>
+</html>
