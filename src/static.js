@@ -10,7 +10,8 @@
 	 * @param {function} callback - The function to execute once ready.
 	 */
 	$.ready = function (callback) {
-		document.readyState === 'loading' ? setTimeout(function () { $.ready(callback); }, 9) : callback($);
+		if ($.browser.ltEqIE10 ? document.readyState === "complete" : document.readyState !== "loading") callback($);
+		else setTimeout(function () { $.ready(callback); }, 1);
 	};
 
 	/**
@@ -95,7 +96,9 @@
 
 	var mouseEvent = /^(?:mouse|pointer|contextmenu|drag|drop)|click/,
 		keyEvent = /^key/,
-		touchEvent = /^touch/;
+		touchEvent = /^touch/,
+		transitionEvent = /^transition/,
+		animationEvent = /^animation/;
 
 	/**
 	 * Given the name of an event, such as click or submit, this returns the type of Event object that should be instantiated.
@@ -103,7 +106,12 @@
 	 * @returns {string}
 	 */
 	$.getEventType = function(name){
-		return (mouseEvent.test(name) ? 'Mouse' : (keyEvent.test(name) ? 'Keyboard' : (touchEvent.test(name) ? 'Touch' : ''))) + 'Event'
+		return (mouseEvent.test(name)
+				? 'Mouse' : (keyEvent.test(name)
+					? 'Keyboard' : (touchEvent.test(name)
+						? 'Touch' : ($.browser.supports('transition') && transitionEvent.test(name)
+							? 'Transition' : ($.browser.supports('animation') && animationEvent.test(name)
+								? 'Animation' : ''))))) + 'Event'
 	};
 
 	/**
@@ -132,6 +140,23 @@
 			}
 		}
 		return array;
+	};
+
+	/**
+	 * Search for a specified value within an array and return its index (or -1 if not found).
+	 * @param {*} value - The value to search for.
+	 * @param {Array} array - An array through which to search.
+	 * @returns {number}
+	 */
+	$.inArray = function(value, array){
+		var result = -1;
+		$.each(array, function(i, item){
+			if (item === value){
+				result = i;
+				return false;
+			}
+		});
+		return result;
 	};
 
 	/**
@@ -197,7 +222,7 @@
 	 * @returns {boolean}
 	 */
 	$.isChildOf = function(child, parent){
-		while ((child = child.parentNode) && child !== parent);
+		while ((child = child.parentNode) && child !== parent) {}
 		return !!child;
 	};
 
