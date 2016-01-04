@@ -230,27 +230,24 @@
 
 	/**
 	 * Get the value of a computed style property for the first element in the set of matched elements or set one or more CSS properties for every matched element.
+	 * Note: the returned value is the COMPUTED value of the specified style property. This means HEX colors will be returned as RGB and properties such as transform
+	 * will return a matrix value.
 	 * @param {(string|object)} nameOrProps - A CSS property name or an object of property-value pairs to set.
 	 * @param {(string|number)} value - A value to set for the property.
-	 * @param {string} [priority] - A string that specifies the priority of the style.
 	 * @returns {(string|FooJitsu)}
 	 */
-	$.prototype.css = function (nameOrProps, value, priority) {
+	$.prototype.css = function (nameOrProps, value) {
 		// get
 		if ($.is.string(nameOrProps) && $.is.undef(value)){
-			return getComputedStyle(this.get(0), null).getPropertyValue($.browser.css($.toHyphen(nameOrProps)));
+			nameOrProps = $.browser.prefixed(nameOrProps, true);
+			return getComputedStyle(this.get(0), null).getPropertyValue($.toHyphen(nameOrProps));
 		}
 		// set OR remove
-		if ($.is.hash(nameOrProps) && value === 'important'){
-			priority = value;
-			value = '';
-		}
-		if (!$.is.string(priority)) priority = '';
 		function _set(el, name, value){
-			name = $.browser.css($.toHyphen(name));
+			name = $.browser.prefixed(name);
 			if ($.is.number(value)) value = value+'px';
 			if (value === '' || value === null) el.style.removeProperty(name);
-			else el.style.setProperty(name, value, priority);
+			else if ($.is.defined(el.style[name])) el.style[name] = value;
 		}
 		return this.each(function(i, el){
 			if ($.is.hash(nameOrProps)){
