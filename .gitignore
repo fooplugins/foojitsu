@@ -180,5 +180,4 @@ pip-log.txt
 ## Custom
 #############
 
-build/
-dist/
+.test/
