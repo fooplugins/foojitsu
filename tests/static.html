@@ -108,6 +108,13 @@
 		assert.equal(made[2], $children[2], 'makeArray($children) - element @ index 2');
 		assert.equal(made[3], $children[3], 'makeArray($children) - element @ index 3');
 	});
+	QUnit.test('inArray', function(assert){
+		var arr = ['one', '2', 'three'];
+		assert.equal(FooJitsu.inArray('one', arr), 0, 'inArray("one")');
+		assert.equal(FooJitsu.inArray('2', arr), 1, 'inArray("2")');
+		assert.equal(FooJitsu.inArray(2, arr), -1, 'inArray(2)');
+		assert.equal(FooJitsu.inArray('three', arr), 2, 'inArray("three")');
+	});
 	QUnit.test('split', function(assert){
 		var result = FooJitsu.split('one two three');
 		assert.ok('[object Array]' === Object.prototype.toString.call(result), 'split("one two three") - return array');

@@ -4,6 +4,17 @@
 	<meta charset="utf-8">
 	<title>FooJitsu - QUnit tests</title>
 	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+	<style>
+		#root {
+			-webkit-transition: width 0.5s ease;
+			-moz-transition: width 0.5s ease;
+			transition: width 0.5s ease;
+			width: 100px;
+		}
+		#root.start-transition {
+			width: 150px;
+		}
+	</style>
 </head>
 <body>
 <div id="qunit"></div>
@@ -44,9 +55,11 @@
 		root.removeEventListener('custom', onCustom);
 	});
 	QUnit.test('on', function(assert){
-		assert.expect(5);
+		assert.expect(12);
 		var $root = FooJitsu('#root'),
-				root = $root.get(0);
+				root = $root.get(0),
+				$child = FooJitsu('#child'),
+				child = $child.get(0);
 
 		function onClick(e){
 			assert.ok(true, 'click handler executed');
@@ -57,14 +70,44 @@
 			assert.ok(e instanceof Event, 'custom event type');
 			assert.propEqual(e.data, {test: 'test'}, 'custom data');
 		}
-		$root.on('click', onClick).on('custom', {test: 'test'}, onCustom);
-		$root.trigger('click').trigger('custom');
+		function onDblClick(e){
+			assert.ok(true, 'dblclick handler executed');
+			assert.ok(e instanceof MouseEvent, 'dblclick event type');
+		}
+		$root.on('click', onClick).trigger('click').trigger('click');
+		$root.on('custom', {test: 'test'}, onCustom).trigger('custom').trigger('custom');
+		$root.on('dblclick', 'a#child', onDblClick).trigger('dblclick');
+		$child.trigger('dblclick');
 
 		root.removeEventListener('click', onClick);
 		root.removeEventListener('custom', onCustom);
 	});
 	QUnit.test('off', function(assert){
-		assert.expect(4);
+		assert.expect(7);
+		var $root = FooJitsu('#root'),
+				$child = FooJitsu('#child');
+		function onClick(e){
+			assert.ok(true, 'click handler executed');
+			assert.ok(e instanceof MouseEvent, 'click event type');
+		}
+		function onCustom(e){
+			assert.ok(true, 'custom handler executed');
+			assert.ok(e instanceof Event, 'custom event type');
+			assert.propEqual(e.data, {test: 'test'}, 'custom data');
+		}
+		function onDblClick(e){
+			assert.ok(true, 'dblclick handler executed');
+			assert.ok(e instanceof MouseEvent, 'dblclick event type');
+		}
+		$root.on('click', onClick).trigger('click').off('click').trigger('click');
+		$root.on('custom', {test: 'test'}, onCustom).trigger('custom').off('custom').trigger('custom');
+		$root.on('dblclick', 'a#child', onDblClick).trigger('dblclick');
+		$child.trigger('dblclick');
+		$root.off('dblclick').trigger('dblclick');
+		$child.trigger('dblclick');
+	});
+	QUnit.test('one', function(assert){
+		assert.expect(5);
 		var $root = FooJitsu('#root');
 		function onClick(e){
 			assert.ok(true, 'click handler executed');
@@ -73,9 +116,23 @@
 		function onCustom(e){
 			assert.ok(true, 'custom handler executed');
 			assert.ok(e instanceof Event, 'custom event type');
+			assert.propEqual(e.data, {test: 'test'}, 'custom data');
 		}
-		$root.on('click', onClick).trigger('click').off('click').trigger('click');
-		$root.on('custom', onCustom).trigger('custom').off('custom').trigger('custom');
+		$root.one('click', onClick).trigger('click').trigger('click');
+		$root.one('custom', {test: 'test'}, onCustom).trigger('custom').trigger('custom');
+	});
+	QUnit.test('transitionend', function(assert){
+		assert.expect(4);
+		var done = assert.async(),
+				$root = FooJitsu('#root');
+		function onTransitionEnd(e){
+			assert.ok(true, 'transitionend handler executed');
+			assert.ok(typeof e.propertyName === 'string', 'transitionend propertyName');
+			assert.ok(typeof e.elapsedTime === 'number', 'transitionend elapsedTime');
+			assert.propEqual(e.data, {test: 'test'}, 'transitionend data');
+			done();
+		}
+		$root.transitionend({test: 'test'}, onTransitionEnd).addClass('start-transition');
 	});
 </script>
 </body>

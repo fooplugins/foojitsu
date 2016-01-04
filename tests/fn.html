@@ -8,7 +8,7 @@
 <body>
 <div id="qunit"></div>
 <div id="qunit-fixture">
-	<div id="root" style="color: #FFF" data-string="test" data-bool="true" data-number="35" data-json='{"string": "test", "bool": true, "number": 35}'>
+	<div id="root" style="color: #FFF; background-color: #F00;" data-string="test" data-bool="true" data-number="35" data-json='{"string": "test", "bool": true, "number": 35}'>
 		<div id="child-1" class="child"></div>
 		<div id="child-2" class="child">
 			<img id="test-image" src="content/image.png"/>
@@ -170,6 +170,9 @@
 		assert.equal($root.css('color'), 'rgb(255, 255, 255)', '$root.css("color")');
 		$root.css('color', 'black');
 		assert.equal($root.css('color'), 'rgb(0, 0, 0)', '$root.css("color", "rgb(0,0,0)")');
+		assert.equal($root.css('background-color'), 'rgb(255, 0, 0)', '$root.css("background-color")');
+		$root.css('background-color', 'black');
+		assert.equal($root.css('background-color'), 'rgb(0, 0, 0)', '$root.css("background-color", "rgb(0,0,0)")');
 		$child4.css({
 			color: '#F00',
 			'background-color': '#000',

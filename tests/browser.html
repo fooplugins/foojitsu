@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+	<style>
+		#root {
+			-webkit-transition: width 0.5s ease;
+			-moz-transition: width 0.5s ease;
+			transition: width 0.5s ease;
+			width: 100px;
+			height: 100px;
+			-webkit-transform: translateX(0);
+			-moz-transform: translateX(0);
+			-ms-transform: translateX(0);
+			transform: translateX(0);
+			-webkit-transform-origin: left top;
+			-moz-transform-origin: left top;
+			-ms-transform-origin: left top;
+			transform-origin: left top;
+		}
+		#root.start-transition {
+			width: 150px;
+		}
+	</style>
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<div id="root">
+		<a id="child"></a>
+	</div>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="../compiled/foojitsu.js"></script>
+<script>
+	QUnit.module('FooJitsu.browser');
+	QUnit.test('transform', function(assert){
+		var $root = FooJitsu('#root'),
+				transform = $root.css('transform');
+		assert.equal(transform, 'matrix(1, 0, 0, 1, 0, 0)', 'original matrix');
+		$root.css('transform', 'translateX(200px)');
+		transform = $root.css('transform');
+		assert.equal(transform, 'matrix(1, 0, 0, 1, 200, 0)', 'updated matrix');
+	});
+	QUnit.test('transformOrigin', function(assert){
+		var $root = FooJitsu('#root'),
+				transformOrigin = $root.css('transform-origin');
+		assert.equal(transformOrigin, '0px 0px', 'original origin');
+		$root.css('transform-origin', 'right bottom');
+		transformOrigin = $root.css('transform-origin');
+		assert.equal(transformOrigin, '100px 100px', 'updated origin');
+	});
+	QUnit.test('transitionend', function(assert){
+		assert.expect(4);
+		var done = assert.async(),
+				$root = FooJitsu('#root');
+		function onTransitionEnd(e){
+			assert.ok(true, 'transitionend handler executed');
+			assert.equal(e.propertyName, 'width', 'transitionend propertyName');
+			assert.ok(typeof e.elapsedTime === 'number', 'transitionend elapsedTime');
+			assert.propEqual(e.data, {test: 'test'}, 'transitionend data');
+			done();
+		}
+		$root.on('transitionend', {test: 'test'}, onTransitionEnd).addClass('start-transition');
+		if (!FooJitsu.browser.supports('transition')){
+			$root.trigger('transitionend', {propertyName: 'width',elapsedTime: 0});
+		}
+	});
+</script>
+</body>
+</html>
