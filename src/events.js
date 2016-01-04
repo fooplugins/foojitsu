@@ -3,11 +3,12 @@
 	/**
 	 * Execute all handlers and behaviors attached to the matched elements for the given event type.
 	 * @param {(string|Event)} event - A string containing a JavaScript event type, such as click or submit, or the actual Event object.
+	 * @param {object} props - An object containing any additional properties to set on the event object.
 	 * @returns {FooJitsu}
 	 */
-	$.prototype.trigger = function(event){
+	$.prototype.trigger = function(event, props){
 		if ($.is.string(event)){
-			var name = event, type = $.getEventType(name);
+			var name = $.browser.event(event), type = $.getEventType(event);
 			if (!!document.createEvent) {
 				event = document.createEvent(type);
 				event.initEvent(name, true, true);
@@ -16,6 +17,7 @@
 			}
 		}
 		if (!$.is.event(event)) return this;
+		if ($.is.hash(props)) $.extend(true, event, props);
 		return this.each(function(i, el){
 			el.dispatchEvent(event);
 		});
@@ -38,21 +40,16 @@
 		var args = Array.prototype.slice.call(arguments), callback, tmp;
 		events = args.shift();
 		handler = args.pop();
+		selector = null;
+		data = null;
 
-		switch (args.length){
-			case 1:
-				tmp = args.shift();
-				selector = $.is.string(tmp) ? tmp : null;
-				data = $.is.hash(tmp) ? tmp : null;
-				break;
-			case 2:
-				selector = args.shift();
-				data = args.shift();
-				break;
-			default:
-				selector = null;
-				data = null;
-				break;
+		if (args.length === 1){
+			tmp = args.shift();
+			selector = $.is.string(tmp) ? tmp : null;
+			data = $.is.hash(tmp) ? tmp : null;
+		} else if (args.length === 2) {
+			selector = args.shift();
+			data = args.shift();
 		}
 
 		if ($.is.string(selector)){
@@ -123,6 +120,60 @@
 				$.cache.set(el, '__events__', __events__);
 			});
 		});
+		return this;
+	};
+
+	/**
+	 * Attach a handler to an event for the matched elements. The handler is executed at most once per element per event type.
+	 * @param {string} events - One or more space-separated event types such as "click" or "keydown".
+	 * @param {?string} [selector] - A selector string to filter the descendants of the selected elements that trigger the event. If the selector is null or omitted, the event is always triggered when it reaches the selected element.
+	 * @param {object} [data] - Data to be passed to the handler in event.data when an event is triggered.
+	 * @param {fnEventCallback} [handler] - A function to execute when the event is triggered.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.one = function(events, selector, data, handler){
+		var self = this, callback,
+			onArgs = Array.prototype.slice.call(arguments),
+			offArgs = Array.prototype.slice.call(arguments);
+
+		// get the original handler and remove it from the arguments
+		handler = onArgs.pop();
+		offArgs.pop();
+
+		// remove data from off arguments
+		if (offArgs.length === 2 || offArgs.length === 3){
+			if ($.is.hash(offArgs[1])) offArgs.splice(1, 1);
+			if ($.is.hash(offArgs[2])) offArgs.splice(2, 1);
+		}
+		// create new callback that self unbinds
+		callback = function(e){
+			self.off.apply(self, offArgs);
+			handler.call(this, e);
+		};
+		// add the new callback to the arguments
+		onArgs.push(callback);
+		offArgs.push(callback);
+
+		return this.on.apply(this, onArgs);
+	};
+
+	/**
+	 * Attach an event handler to the transitionend event for the matched elements. When using this method in a browser that does not support
+	 * transitions the handler is executed immediately and the event.propertyName is set to an empty string and the event.elapsedTime is set to 0 (zero).
+	 * @param {object} [data] - Data to be passed to the handler in event.data when an event is triggered.
+	 * @param {fnEventCallback} [handler] - A function to execute when the event is triggered.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.transitionend = function(data, handler){
+		var self = this, args = Array.prototype.slice.call(arguments);
+		args.unshift('transitionend');
+		this.one.apply(this, args);
+		if (!$.browser.supports('transition')){
+			// delay execution by a millisecond to simulate an event being executed asynchronously and allow any chained functions to execute
+			setTimeout(function(){
+				self.trigger('transitionend', {propertyName: '', elapsedTime: 0});
+			}, 1);
+		}
 		return this;
 	};
 
