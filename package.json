@@ -1,9 +1,9 @@
 {
   "name": "foojitsu",
   "title": "FooJitsu",
-  "description": "FooJitsu - Javascript Plugin Framework",
-  "version": "1.0.0",
-  "homepage": "http://fooplugins.com",
+  "description": "A lightweight JavaScript framework for plugins.",
+  "version": "1.0.1",
+  "homepage": "https://github.com/fooplugins/foojitsu",
   "author": {
     "name": "FooPlugins",
     "url": "http://fooplugins.com"
