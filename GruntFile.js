@@ -8,13 +8,22 @@ module.exports = function (grunt) {
 			files: ['compiled']
 		},
 		concat: {
+			options: {
+				banner: '/*!\n' +
+				'* <%= pkg.title %> - <%= pkg.description %>\n' +
+				'* @version <%= pkg.version %>\n' +
+				'* @link <%= pkg.homepage %>\n' +
+				'* @copyright Steven Usher & Brad Vincent 2015\n' +
+				'* @license Released under the MIT license.\n' +
+				'*/\n'
+			},
 			js: {
 				src: [
 					"src/foojitsu.js",
-					"src/static.js",
 					"src/is.js",
-					"src/deferred.js",
 					"src/browser.js",
+					"src/static.js",
+					"src/deferred.js",
 					"src/cache.js",
 					"src/fn.js",
 					"src/events.js"
@@ -43,7 +52,8 @@ module.exports = function (grunt) {
 			is: ['tests/is.html'],
 			static: ['tests/static.html'],
 			cache: ['tests/cache.html'],
-			events: ['tests/events.html']
+			events: ['tests/events.html'],
+			browser: ['tests/browser.html']
 		}
 	});
 
