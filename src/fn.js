@@ -228,9 +228,7 @@
 	 * @returns {number}
 	 */
 	$.prototype.index = function(){
-		var k = 0, e = this.get(0);
-		while (e = e.previousElementSibling) { ++k; }
-		return k;
+		return $.index(this.get(0));
 	};
 
 	/**
@@ -473,7 +471,7 @@
 
 	/**
 	 * Get the current computed width for the first element in the set of matched elements or set the width of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.width = function(value){
@@ -482,7 +480,7 @@
 
 	/**
 	 * Get the current computed height for the first element in the set of matched elements or set the height of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.height = function(value){
@@ -491,7 +489,7 @@
 
 	/**
 	 * Get the current computed top position for the first element in the set of matched elements or set the top position of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.top = function(value){
@@ -500,7 +498,7 @@
 
 	/**
 	 * Get the current computed bottom position for the first element in the set of matched elements or set the bottom position of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.bottom = function(value){
@@ -509,7 +507,7 @@
 
 	/**
 	 * Get the current computed left position for the first element in the set of matched elements or set the left position of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.left = function(value){
@@ -518,7 +516,7 @@
 
 	/**
 	 * Get the current computed right position for the first element in the set of matched elements or set the right position of every matched element.
-	 * @param {(number|string)} value - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+	 * @param {(number|string)} [value] - An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
 	 * @returns {(number|FooJitsu)}
 	 */
 	$.prototype.right = function(value){

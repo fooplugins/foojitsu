@@ -280,6 +280,16 @@
 		return !!child;
 	};
 
+	/**
+	 * Get an integer indicating the position of the supplied element within it's parent element relative to its sibling elements.
+	 * @returns {number}
+	 */
+	$.index = function(element){
+		var k = 0, e = element;
+		while (e = e.previousElementSibling) { ++k; }
+		return k;
+	};
+
 	var elem = document.createElement('div');
 	/**
 	 * Parses a string into a NodeList.
