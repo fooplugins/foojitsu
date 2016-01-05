@@ -10,7 +10,7 @@
 <div id="qunit-fixture">
 	<div id="root" style="color: #FFF; background-color: #F00;" data-string="test" data-bool="true" data-number="35" data-json='{"string": "test", "bool": true, "number": 35}'>
 		<div id="child-1" class="child"></div>
-		<div id="child-2" class="child">
+		<div id="child-2" class="child exclude">
 			<img id="test-image" src="content/image.png"/>
 		</div>
 		<div id="child-3" class="child">
@@ -28,8 +28,39 @@
 		FooJitsu('.child').each(function(i, el){
 			assert.ok(true, 'callback executed');
 			assert.ok(typeof i === 'number', 'first arg is the index');
-			assert.equal(el, this, 'second arg is the element');
+			assert.ok(FooJitsu.is.element(el), 'second arg is the element');
 		});
+	});
+	QUnit.test('append', function(assert){
+		var root = document.querySelector('#root'), $root = FooJitsu('#root'), child4 = document.querySelector('#child-4'), $children = $root.find('.child');
+		$root.append(child4);
+		assert.equal(root.children.length, 4, 'child 4 - moved');
+		var $child4 = FooJitsu('#child-4');
+		$children.append($child4);
+		assert.equal(root.children.length, 3, 'child 4 - moved');
+		var children = document.querySelectorAll('#root > .child');
+		assert.equal(children[0].children.length, 1, 'child 1 - children length');
+		assert.equal(children[0].children[0], child4, 'child 1 - moved');
+		assert.equal(children[1].children.length, 2, 'child 2 - children length');
+		assert.equal(children[1].children[1].tagName.toLowerCase(), 'div', 'child 2 - cloned');
+		assert.equal(children[2].children.length, 2, 'child 3 - children length');
+		assert.equal(children[2].children[1].tagName.toLowerCase(), 'div', 'child 3 - cloned');
+	});
+	QUnit.test('appendTo', function(assert){
+		var root = document.querySelector('#root'), $root = FooJitsu('#root'),
+				child4 = document.querySelector('#child-4'), $child4 = FooJitsu('#child-4'),
+				$children = $root.find('.child');
+		$child4.appendTo(root);
+		assert.equal(root.children.length, 4, 'child 4 - moved');
+		$child4.appendTo($children);
+		assert.equal(root.children.length, 3, 'child 4 - moved');
+		var children = document.querySelectorAll('#root > .child');
+		assert.equal(children[0].children.length, 1, 'child 1 - children length');
+		assert.equal(children[0].children[0], child4, 'child 1 - moved');
+		assert.equal(children[1].children.length, 2, 'child 2 - children length');
+		assert.equal(children[1].children[1].tagName.toLowerCase(), 'div', 'child 2 - cloned');
+		assert.equal(children[2].children.length, 2, 'child 3 - children length');
+		assert.equal(children[2].children[1].tagName.toLowerCase(), 'div', 'child 3 - cloned');
 	});
 	QUnit.test('get', function(assert){
 		var root = document.querySelector('#root'), $root = FooJitsu('#root'),
@@ -61,6 +92,50 @@
 		assert.equal($children.length, 2, 'find(".child:not(#child-1)")');
 		$children = $root.find('.nothing');
 		assert.equal($children.length, 0, 'find(".nothing")');
+	});
+	QUnit.test('prev', function(assert){
+		var root = document.querySelector('#root'),
+				children = root.querySelectorAll('.child'),
+				$root = FooJitsu('#root'),
+				$children = $root.find('.child'),
+				$child3 = FooJitsu('#child-3'),
+				$child4 = FooJitsu('#child-4');
+
+		var $prevChildren = $children.prev();
+		assert.equal($prevChildren.length, 2, 'children.prev length');
+		assert.equal($prevChildren[0], children[0], 'element @ index 0');
+		assert.equal($prevChildren[1], children[1], 'element @ index 1');
+		var $prevChild4 = $child4.prev();
+		assert.equal($prevChild4.length, 1, 'child4.prev length');
+		assert.equal($prevChild4[0], root, 'element @ index 0');
+		var $prevChild3 = $child3.prev();
+		assert.equal($prevChild3.length, 1, '$child3.prev length');
+		assert.equal($prevChild3[0], children[1], 'element @ index 0');
+		var $prevChild3Exclude = $child3.prev(':not(.exclude)');
+		assert.equal($prevChild3Exclude.length, 1, '$child3.prev(exclude) length');
+		assert.equal($prevChild3Exclude[0], children[0], 'element @ index 0');
+	});
+	QUnit.test('next', function(assert){
+		var root = document.querySelector('#root'),
+				children = root.querySelectorAll('.child'),
+				child4 = document.querySelector('#child-4'),
+				$root = FooJitsu('#root'),
+				$children = $root.find('.child'),
+				$child1 = FooJitsu('#child-1');
+
+		var $nextChildren = $children.next();
+		assert.equal($nextChildren.length, 2, 'children.next length');
+		assert.equal($nextChildren[0], children[1], 'element @ index 0');
+		assert.equal($nextChildren[1], children[2], 'element @ index 1');
+		var $nextRoot = $root.next();
+		assert.equal($nextRoot.length, 1, 'child4.next length');
+		assert.equal($nextRoot[0], child4, 'element @ index 0');
+		var $nextChild1 = $child1.next();
+		assert.equal($nextChild1.length, 1, '$child1.next length');
+		assert.equal($nextChild1[0], children[1], 'element @ index 0');
+		var $nextChild1Exclude = $child1.next(':not(.exclude)');
+		assert.equal($nextChild1Exclude.length, 1, '$child1.next(exclude) length');
+		assert.equal($nextChild1Exclude[0], children[2], 'element @ index 0');
 	});
 	QUnit.test('filter', function(assert){
 		var $root = FooJitsu('#root'), $children = $root.find('.child');

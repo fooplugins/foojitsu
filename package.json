@@ -2,7 +2,7 @@
   "name": "foojitsu",
   "title": "FooJitsu",
   "description": "A lightweight JavaScript framework for plugins.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "https://github.com/fooplugins/foojitsu",
   "author": {
     "name": "FooPlugins",

@@ -3,7 +3,21 @@
 	 * The namespace used to house common IS checks.
 	 * @namespace
 	 */
-	$.is = {};
+	$.is = function(el, selector){
+		var p = selector.split(','), result = false;
+		$.each(p, function (i, s) {
+			s = s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+			if (s === '') return;
+			var root = $.is.element(el.parentNode) ? el.parentNode.cloneNode(false) : document.createElement('div'),
+				clone = el.cloneNode(true);
+			root.appendChild(clone);
+			if (root.querySelector(s) === clone) {
+				result = true;
+				return false;
+			}
+		});
+		return result;
+	};
 
 	/**
 	 * Checks if the supplied object is an instance of a FooPlugins object.

@@ -32,9 +32,9 @@
 
 	/**
 	 * @callback eachCallback
-	 * @param {(number|string)} indexOrName - The index or name of the current item.
+	 * @param {(number|string)} indexOrKey - The index or property key of the current item.
 	 * @param {*} value - The current item's value.
-	 * @this *
+	 * @this window
 	 */
 	/**
 	 * A generic iterator function, which can be used to seamlessly iterate over both objects and arrays.
@@ -45,18 +45,72 @@
 	 */
 	$.each = function (target, callback) {
 		var result;
-		if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
-			for (var i = 0, len = target.length; i < len; i++) {
-				result = callback.call(target[i], i, target[i]);
-				if ($.is.boolean(result) && result === false) break;
-			}
-		} else if ($.is.hash(target)) {
+		if ($.is.hash(target)) {
 			for (var name in target) {
 				if (!target.hasOwnProperty(name)) continue;
-				result = callback.call(target[name], name, target[name]);
+				result = callback.call(window, name, target[name]);
+				if ($.is.boolean(result) && result === false) break;
+			}
+		} else if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
+			for (var i = 0, len = target.length; i < len; i++) {
+				result = callback.call(window, i, target[i]);
 				if ($.is.boolean(result) && result === false) break;
 			}
 		}
+	};
+
+	/**
+	 * @callback filterCallback
+	 * @param {(number|string)} indexOrKey - The index or property key of the current item.
+	 * @param {*} value - The current item's value.
+	 * @returns {boolean}
+	 * @this window
+	 */
+	/**
+	 * Reduce the items or properties of the supplied target to those that match the callback's test.
+	 * @param {(Array|object)} target - The array or object to iterate over.
+	 * @param {filterCallback} callback - The function that is used to test each value.
+	 * @returns {(Array|object)}
+	 */
+	$.filter = function(target, callback){
+		var result;
+		if ($.is.hash(target)){
+			result = {};
+			$.each(target, function(name, value){
+				if (callback.call(window, name, value) === true) result[name] = value;
+			});
+		} else if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)){
+			result = [];
+			$.each(target, function(i, item){
+				if (callback.call(window, i, item) === true) result.push(item);
+			});
+		}
+		return result;
+	};
+
+	/**
+	 * @callback mapCallback
+	 * @param {*} value - The current item's value.
+	 * @param {(number|string)} indexOrKey - The index or property key of the current value.
+	 * @returns {*}
+	 * @this window
+	 */
+	/**
+	 * Translate all items in an array or object to new array of items.
+	 * @param {(Array|object)} target - The array or object to iterate over.
+	 * @param {mapCallback} callback - The function to process each item against.
+	 * @returns {Array}
+	 */
+	$.map = function(target, callback){
+		var result = [], tmp;
+		$.each(target, function(indexOrKey, value){
+			tmp = callback.call(window, value, indexOrKey);
+			if ($.is.defined(tmp) && tmp !== null){
+				if ($.is.array(tmp)) result = result.concat(tmp);
+				else result.push(tmp);
+			}
+		});
+		return result;
 	};
 
 	/**
@@ -224,6 +278,18 @@
 	$.isChildOf = function(child, parent){
 		while ((child = child.parentNode) && child !== parent) {}
 		return !!child;
+	};
+
+	var elem = document.createElement('div');
+	/**
+	 * Parses a string into a NodeList.
+	 * @param {string} htmlString - The HTML string to be parsed.
+	 * @returns {(NodeList|null)}
+	 */
+	$.parseHTML = function(htmlString){
+		if (!$.is.html(htmlString)) return null;
+		elem.innerHTML = htmlString;
+		return elem.childNodes;
 	};
 
 })(FooJitsu);

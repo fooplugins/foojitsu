@@ -86,8 +86,8 @@
 	};
 
 	/**
-	 * Remove an event handler.
-	 * @param {string} events - One or more space-separated event types such as "click" or "keydown" to remove.
+	 * Remove an event handler. If no parameters are supplied all events are removed from the matched elements.
+	 * @param {string} [events] - One or more space-separated event types such as "click" or "keydown" to remove.
 	 * @param {?string} [selector] - A selector which should match the one originally passed to .on() when attaching event handlers.
 	 * @param {fnEventCallback} [handler] - A handler function previously attached for the event(s).
 	 * @returns {FooJitsu}
@@ -100,26 +100,36 @@
 
 		var l = $.is.fn(handler), s = $.is.string(selector);
 
-		var self = this;
-		$.each($.split(events), function(i, name){
-			self.each(function(x, el){
-				var __events__ = $.cache.get(el, '__events__'), remove = [];
+		var self = this, names = $.split(events);
+		if (names.length === 0){
+			self.each(function(i, el){
+				var __events__ = $.cache.get(el, '__events__');
 				$.each(__events__, function(i, e){
-					if ((l && s && e.name === name && e.selector === selector && e.original === handler)
-						|| (l && !s && e.name === name && e.original === handler)
-						|| (!l && s && e.name === name && e.selector === selector)
-						|| (!l && !s && e.name === name)){
-						el.removeEventListener($.browser.event(name), e.handler, false);
-						remove.push(i);
-					}
+					el.removeEventListener($.browser.event(e.name), e.handler, false);
 				});
-				remove.sort(function(a, b){ return b - a; });
-				$.each(remove, function(i, index){
-					__events__.splice(index);
-				});
-				$.cache.set(el, '__events__', __events__);
+				$.cache.clear(el, '__events__');
 			});
-		});
+		} else {
+			$.each(names, function(i, name){
+				self.each(function(x, el){
+					var __events__ = $.cache.get(el, '__events__'), remove = [];
+					$.each(__events__, function(i, e){
+						if ((l && s && e.name === name && e.selector === selector && e.original === handler)
+							|| (l && !s && e.name === name && e.original === handler)
+							|| (!l && s && e.name === name && e.selector === selector)
+							|| (!l && !s && e.name === name)){
+							el.removeEventListener($.browser.event(name), e.handler, false);
+							remove.push(i);
+						}
+					});
+					remove.sort(function(a, b){ return b - a; });
+					$.each(remove, function(i, index){
+						__events__.splice(index);
+					});
+					$.cache.set(el, '__events__', __events__);
+				});
+			});
+		}
 		return this;
 	};
 

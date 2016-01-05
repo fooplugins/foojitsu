@@ -1,6 +1,6 @@
 /*!
 * FooJitsu - A lightweight JavaScript framework for plugins.
-* @version 1.0.1
+* @version 1.0.2
 * @link https://github.com/fooplugins/foojitsu
 * @copyright Steven Usher & Brad Vincent 2015
 * @license Released under the MIT license.
@@ -17,12 +17,16 @@
 		this.context = $.getContext(args);
 		this.length = 0;
 		var arg1 = args.shift();
-		if ($.is.selector(arg1)) {
+		if ($.is.self(arg1)) {
+			return arg1;
+		} else if ($.is.selector(arg1)) {
 			return $(this.context.querySelectorAll(arg1), this.context);
+		} else if ($.is.html(arg1)) {
+			return $($.parseHTML(arg1), this.context);
 		} else if ($.is.element(arg1)) {
 			this[0] = arg1;
 			this.length = 1;
-		} else if ($.is.array(arg1) || $.is.self(arg1) || $.is.arrayLike(arg1)) {
+		} else if ($.is.array(arg1) || $.is.arrayLike(arg1)) {
 			$.each(arg1, function(i, value){
 				if ($.is.element(value)) self[i] = value;
 			});
@@ -40,7 +44,21 @@
 	 * The namespace used to house common IS checks.
 	 * @namespace
 	 */
-	$.is = {};
+	$.is = function(el, selector){
+		var p = selector.split(','), result = false;
+		$.each(p, function (i, s) {
+			s = s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+			if (s === '') return;
+			var root = $.is.element(el.parentNode) ? el.parentNode.cloneNode(false) : document.createElement('div'),
+				clone = el.cloneNode(true);
+			root.appendChild(clone);
+			if (root.querySelector(s) === clone) {
+				result = true;
+				return false;
+			}
+		});
+		return result;
+	};
 
 	/**
 	 * Checks if the supplied object is an instance of a FooPlugins object.
@@ -341,9 +359,9 @@
 
 	/**
 	 * @callback eachCallback
-	 * @param {(number|string)} indexOrName - The index or name of the current item.
+	 * @param {(number|string)} indexOrKey - The index or property key of the current item.
 	 * @param {*} value - The current item's value.
-	 * @this *
+	 * @this window
 	 */
 	/**
 	 * A generic iterator function, which can be used to seamlessly iterate over both objects and arrays.
@@ -354,18 +372,72 @@
 	 */
 	$.each = function (target, callback) {
 		var result;
-		if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
-			for (var i = 0, len = target.length; i < len; i++) {
-				result = callback.call(target[i], i, target[i]);
-				if ($.is.boolean(result) && result === false) break;
-			}
-		} else if ($.is.hash(target)) {
+		if ($.is.hash(target)) {
 			for (var name in target) {
 				if (!target.hasOwnProperty(name)) continue;
-				result = callback.call(target[name], name, target[name]);
+				result = callback.call(window, name, target[name]);
+				if ($.is.boolean(result) && result === false) break;
+			}
+		} else if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
+			for (var i = 0, len = target.length; i < len; i++) {
+				result = callback.call(window, i, target[i]);
 				if ($.is.boolean(result) && result === false) break;
 			}
 		}
+	};
+
+	/**
+	 * @callback filterCallback
+	 * @param {(number|string)} indexOrKey - The index or property key of the current item.
+	 * @param {*} value - The current item's value.
+	 * @returns {boolean}
+	 * @this window
+	 */
+	/**
+	 * Reduce the items or properties of the supplied target to those that match the callback's test.
+	 * @param {(Array|object)} target - The array or object to iterate over.
+	 * @param {filterCallback} callback - The function that is used to test each value.
+	 * @returns {(Array|object)}
+	 */
+	$.filter = function(target, callback){
+		var result;
+		if ($.is.hash(target)){
+			result = {};
+			$.each(target, function(name, value){
+				if (callback.call(window, name, value) === true) result[name] = value;
+			});
+		} else if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)){
+			result = [];
+			$.each(target, function(i, item){
+				if (callback.call(window, i, item) === true) result.push(item);
+			});
+		}
+		return result;
+	};
+
+	/**
+	 * @callback mapCallback
+	 * @param {*} value - The current item's value.
+	 * @param {(number|string)} indexOrKey - The index or property key of the current value.
+	 * @returns {*}
+	 * @this window
+	 */
+	/**
+	 * Translate all items in an array or object to new array of items.
+	 * @param {(Array|object)} target - The array or object to iterate over.
+	 * @param {mapCallback} callback - The function to process each item against.
+	 * @returns {Array}
+	 */
+	$.map = function(target, callback){
+		var result = [], tmp;
+		$.each(target, function(indexOrKey, value){
+			tmp = callback.call(window, value, indexOrKey);
+			if ($.is.defined(tmp) && tmp !== null){
+				if ($.is.array(tmp)) result = result.concat(tmp);
+				else result.push(tmp);
+			}
+		});
+		return result;
 	};
 
 	/**
@@ -533,6 +605,18 @@
 	$.isChildOf = function(child, parent){
 		while ((child = child.parentNode) && child !== parent) {}
 		return !!child;
+	};
+
+	var elem = document.createElement('div');
+	/**
+	 * Parses a string into a NodeList.
+	 * @param {string} htmlString - The HTML string to be parsed.
+	 * @returns {(NodeList|null)}
+	 */
+	$.parseHTML = function(htmlString){
+		if (!$.is.html(htmlString)) return null;
+		elem.innerHTML = htmlString;
+		return elem.childNodes;
 	};
 
 })(FooJitsu);
@@ -881,6 +965,24 @@
 	};
 
 	/**
+	 * @callback fnMapCallback
+	 * @param {number} index - The index of the current element.
+	 * @param {HTMLElement} element - The current element.
+	 * @returns {*}
+	 * @this HTMLElement
+	 */
+	/**
+	 * Pass each element in the current matched set through a function, producing an array containing the return values.
+	 * @param {fnMapCallback} callback - A function that will be invoked for each element in the current set.
+	 * @returns {Array}
+	 */
+	$.prototype.map = function(callback){
+		return $.map(this, function(el, index){
+			return callback.call(el, index, el);
+		});
+	};
+
+	/**
 	 * Retrieve the DOM elements matched by the FooJitsu object. If an index is supplied
 	 * retrieve one of the elements matched by the FooJitsu object.
 	 * @param {number} [index] - The index of the element to retrieve. You can specify -1 to retrieve the last element.
@@ -904,18 +1006,9 @@
 	 * @returns {boolean}
 	 */
 	$.prototype.is = function (selector) {
-		var p = selector.split(','), result = false;
+		var result = false;
 		this.each(function (i, el) {
-			$.each(p, function (j, s) {
-				var root = $.is.element(el.parentNode) ? el.parentNode.cloneNode(false) : document.createElement('div'),
-					clone = el.cloneNode(true);
-				root.appendChild(clone);
-				if (root.querySelector(s) === clone) {
-					result = true;
-					return false;
-				}
-			});
-			if (result === true) return false;
+			if ((result = $.is(el, selector)) === true) return false;
 		});
 		return result;
 	};
@@ -942,17 +1035,13 @@
 	 * @returns {FooJitsu}
 	 */
 	$.prototype.filter = function (selectorOrCallback) {
-		var filtered = [],
-			isFN = $.is.fn(selectorOrCallback),
+		var isFN = $.is.fn(selectorOrCallback),
 			isSEL = $.is.selector(selectorOrCallback),
-			filter = function(i, el){
+			filtered = $.filter(this, function(i, el){
 				if (isFN) return selectorOrCallback.call(el, i, el);
 				else if (isSEL) return $(el).is(selectorOrCallback);
 				else return true;
-			};
-		this.each(function (i, el) {
-			if (filter(i, el)) filtered.push(el);
-		});
+			});
 		return $(filtered, this);
 	};
 
@@ -1088,7 +1177,7 @@
 	 */
 	$.prototype.index = function(){
 		var k = 0, e = this.get(0);
-		while (e = e.previousSibling) { if (e.nodeType === 1) ++k; }
+		while (e = e.previousElementSibling) { ++k; }
 		return k;
 	};
 
@@ -1177,6 +1266,16 @@
 	};
 
 	/**
+	 * Removes all stored FooJitsu data from the matched elements.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.removeData = function(){
+		return this.each(function(i, el){
+			$.cache.clear(el, true);
+		});
+	};
+
+	/**
 	 * Waits for content (images and iframes) to load before executing the callback function.
 	 * @param {function} callback - The function to execute once all content is loaded.
 	 */
@@ -1189,7 +1288,7 @@
 				results++;
 				return;
 			}
-			var $loadable = $(loadable).on('load error', function(e){
+			var $loadable = $(loadable).on('load error', function(){
 				$loadable.off('load error');
 				results++;
 			}).attr('src', loadable.src);
@@ -1203,6 +1302,107 @@
 			else callback.call(self);
 		}
 		check();
+	};
+
+	/**
+	 * Get the immediately preceding sibling of each element in the set of matched elements, optionally filtered by a selector.
+	 * @param {string} [selector] - The selector to filter the previous sibling elements by.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.prev = function(selector){
+		var map = this.map(function(i, el){
+			if ($.is.string(selector)){
+				var prev = null, tmp = el;
+				while (prev === null && !!(tmp = tmp.previousElementSibling)){
+					if ($.is(tmp, selector)) prev = tmp;
+				}
+				return prev;
+			}
+			return el.previousElementSibling;
+		});
+		return $(map, this.context);
+	};
+
+	/**
+	 * Get the immediately following sibling of each element in the set of matched elements, optionally filtered by a selector.
+	 * @param {string} [selector] - The selector to filter the next sibling elements by.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.next = function(selector){
+		var map = this.map(function(i, el){
+			if ($.is.string(selector)){
+				var next = null, tmp = el;
+				while (next === null && !!(tmp = tmp.nextElementSibling)){
+					if ($.is(tmp, selector)) next = tmp;
+				}
+				return next;
+			}
+			return el.nextElementSibling;
+		});
+		return $(map, this.context);
+	};
+
+	/**
+	 * Clones all elements and returns a new FooJitsu object.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.clone = function(){
+		var result = [];
+		this.each(function(i, el){
+			result.push(el.cloneNode(true));
+		});
+		return $(result, this.context);
+	};
+
+	/**
+	 * Insert content, specified by the parameters, to the end of each element in the set of matched elements.
+	 * @param {(string|HTMLElement|FooJitsu)} arg1 - The HTML string, DOM element or FooJitsu object to append.
+	 * @param {...(string|HTMLElement|FooJitsu)} [argN] - Any additional items to append.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.append = function(arg1, argN){
+		var args = Array.prototype.slice.call(arguments), frag;
+		return this.each(function(i, el){
+			frag = document.createDocumentFragment();
+			$.each(args, function(j, arg){
+				if ($.is.self(arg)){
+					$.each(i == 0 ? arg : arg.clone(), function(i, elem){
+						frag.appendChild(elem);
+					});
+				} else if ($.is.html(arg)){
+					$.each($.parseHTML(arg), function(i, elem){
+						frag.appendChild(elem);
+					});
+				} else if ($.is.element(arg)) {
+					frag.appendChild(i == 0 ? arg : arg.cloneNode(true));
+				}
+			});
+			if (frag.childNodes.length > 0) el.appendChild(frag);
+		});
+	};
+
+	/**
+	 * Insert every element in the set of matched elements to the end of the target.
+	 * @param {(string|HTMLElement|FooJitsu)} arg1 - The selector, DOM element or FooJitsu object to append to.
+	 * @param {...(string|HTMLElement|FooJitsu)} [argN] - Any additional items to append to.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.appendTo = function(arg1, argN){
+		var self = this, args = Array.prototype.slice.call(arguments);
+		$.each(args, function(i, arg){
+			$(arg).append(self);
+		});
+		return this;
+	};
+
+	/**
+	 * Removes the matched elements from the DOM, unbinding events and removing stored data.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.remove = function(){
+		return this.off().removeData().each(function(i, el){
+			if (!!el.parentNode) el.parentNode.removeChild(el);
+		});
 	};
 
 	/**
@@ -1362,8 +1562,8 @@
 	};
 
 	/**
-	 * Remove an event handler.
-	 * @param {string} events - One or more space-separated event types such as "click" or "keydown" to remove.
+	 * Remove an event handler. If no parameters are supplied all events are removed from the matched elements.
+	 * @param {string} [events] - One or more space-separated event types such as "click" or "keydown" to remove.
 	 * @param {?string} [selector] - A selector which should match the one originally passed to .on() when attaching event handlers.
 	 * @param {fnEventCallback} [handler] - A handler function previously attached for the event(s).
 	 * @returns {FooJitsu}
@@ -1376,26 +1576,36 @@
 
 		var l = $.is.fn(handler), s = $.is.string(selector);
 
-		var self = this;
-		$.each($.split(events), function(i, name){
-			self.each(function(x, el){
-				var __events__ = $.cache.get(el, '__events__'), remove = [];
+		var self = this, names = $.split(events);
+		if (names.length === 0){
+			self.each(function(i, el){
+				var __events__ = $.cache.get(el, '__events__');
 				$.each(__events__, function(i, e){
-					if ((l && s && e.name === name && e.selector === selector && e.original === handler)
-						|| (l && !s && e.name === name && e.original === handler)
-						|| (!l && s && e.name === name && e.selector === selector)
-						|| (!l && !s && e.name === name)){
-						el.removeEventListener($.browser.event(name), e.handler, false);
-						remove.push(i);
-					}
+					el.removeEventListener($.browser.event(e.name), e.handler, false);
 				});
-				remove.sort(function(a, b){ return b - a; });
-				$.each(remove, function(i, index){
-					__events__.splice(index);
-				});
-				$.cache.set(el, '__events__', __events__);
+				$.cache.clear(el, '__events__');
 			});
-		});
+		} else {
+			$.each(names, function(i, name){
+				self.each(function(x, el){
+					var __events__ = $.cache.get(el, '__events__'), remove = [];
+					$.each(__events__, function(i, e){
+						if ((l && s && e.name === name && e.selector === selector && e.original === handler)
+							|| (l && !s && e.name === name && e.original === handler)
+							|| (!l && s && e.name === name && e.selector === selector)
+							|| (!l && !s && e.name === name)){
+							el.removeEventListener($.browser.event(name), e.handler, false);
+							remove.push(i);
+						}
+					});
+					remove.sort(function(a, b){ return b - a; });
+					$.each(remove, function(i, index){
+						__events__.splice(index);
+					});
+					$.cache.set(el, '__events__', __events__);
+				});
+			});
+		}
 		return this;
 	};
 
