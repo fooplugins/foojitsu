@@ -1,3 +1,10 @@
+/*!
+* FooJitsu - A lightweight JavaScript framework for plugins.
+* @version 1.0.1
+* @link https://github.com/fooplugins/foojitsu
+* @copyright Steven Usher & Brad Vincent 2015
+* @license Released under the MIT license.
+*/
 (function(){
 
 	function $(){
@@ -28,210 +35,6 @@
 	window.FooJitsu = $;
 
 })();
-(function ($) {
-
-	/**
-	 * Empty function
-	 */
-	$.noop = function(){};
-
-	/**
-	 * Waits for the DOM to be accessible and then executes the callback.
-	 * @param {function} callback - The function to execute once ready.
-	 */
-	$.ready = function (callback) {
-		document.readyState === 'loading' ? setTimeout(function () { $.ready(callback); }, 9) : callback($);
-	};
-
-	/**
-	 * Used by the FooJitsu constructor, when given an array of args this function returns the correct context to use.
-	 * @param {Array} args - The arguments to check.
-	 * @returns {Node}
-	 */
-	$.getContext = function(args){
-		if ($.is.array(args) && args.length > 1){
-			var ctx = args[args.length - 1];
-			if ($.is.selector(args[0])){
-				if ($.is.self(ctx) && ctx.length == 1) return ctx.get(0);
-				if ($.is.element(ctx)) return ctx;
-			}
-		}
-		return document;
-	};
-
-	/**
-	 * @callback eachCallback
-	 * @param {(number|string)} indexOrName - The index or name of the current item.
-	 * @param {*} value - The current item's value.
-	 * @this *
-	 */
-	/**
-	 * A generic iterator function, which can be used to seamlessly iterate over both objects and arrays.
-	 * Arrays and array-like objects with a length property (such as a function's arguments object) are
-	 * iterated by numeric index, from 0 to length-1. Other objects are iterated via their named properties.
-	 * @param {(Array|object)} target - The array or object to iterate over.
-	 * @param {(eachCallback)} callback - The function that will be executed on every value.
-	 */
-	$.each = function (target, callback) {
-		var result;
-		if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
-			for (var i = 0, len = target.length; i < len; i++) {
-				result = callback.call(target[i], i, target[i]);
-				if ($.is.boolean(result) && result === false) break;
-			}
-		} else if ($.is.hash(target)) {
-			for (var name in target) {
-				if (!target.hasOwnProperty(name)) continue;
-				result = callback.call(target[name], name, target[name]);
-				if ($.is.boolean(result) && result === false) break;
-			}
-		}
-	};
-
-	/**
-	 * Merge the contents of two or more objects together into the first object.
-	 * @param {(object|boolean)} deepOrTarget - Whether to perform a deep copy or the target object to receive additional properties.
-	 * @param {object} targetOrObject1 - Either the target object to receive additional properties or an object containing additional properties to merge in.
-	 * @param {...object} [objectN] - Additional objects containing properties to merge in.
-	 * @returns {object}
-	 */
-	$.extend = function (deepOrTarget, targetOrObject1, objectN) {
-		var args = Array.prototype.slice.call(arguments),
-			target = args.shift(), deep = false, src, clone;
-
-		if ($.is.boolean(target)){
-			deep = target;
-			target = args.shift() || {};
-		}
-
-		$.each(args, function(i, obj){
-			if (!$.is.hash(obj) && !$.is.array(obj)) return;
-			$.each(obj, function(name, value){
-				src = target[name];
-				if (target === value) return;
-				if (deep && $.is.array(value)){
-					clone = $.is.array(src) ? src : [];
-					target[name] = $.extend(deep, clone, value);
-				} else if (deep && $.is.hash(value)){
-					clone = $.is.hash(src) ? src : {};
-					target[name] = $.extend(deep, clone, value);
-				} else if ($.is.defined(value)) {
-					target[name] = value;
-				}
-			});
-		});
-		return target;
-	};
-
-	var mouseEvent = /^(?:mouse|pointer|contextmenu|drag|drop)|click/,
-		keyEvent = /^key/,
-		touchEvent = /^touch/;
-
-	/**
-	 * Given the name of an event, such as click or submit, this returns the type of Event object that should be instantiated.
-	 * @param {string} name - The name of the event.
-	 * @returns {string}
-	 */
-	$.getEventType = function(name){
-		return (mouseEvent.test(name) ? 'Mouse' : (keyEvent.test(name) ? 'Keyboard' : (touchEvent.test(name) ? 'Touch' : ''))) + 'Event'
-	};
-
-	/**
-	 * Remove the whitespace from the beginning and end of a string and optional replace multiple spaces with a single space.
-	 * @param {string} str - The string to trim.
-	 * @param {boolean} [replaceMultiple=false] - Whether or not to replace multiple spaces with a single space.
-	 * @returns {string}
-	 */
-	$.trim = function (str, replaceMultiple) {
-		if ($.is.undef(str) || str == null) return '';
-		if (!!replaceMultiple) str = str.replace(/[\s\uFEFF\xA0]{2,}/g, ' ');
-		return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-	};
-
-	/**
-	 * Convert an array-like object into a true JavaScript array.
-	 * @param {object} arrayLike - The object to create an array from.
-	 * @returns {Array}
-	 */
-	$.makeArray = function (arrayLike) {
-		var array = [];
-		if ($.is.arrayLike(arrayLike)) {
-			for (var i = 0, len = arrayLike.length, tmp; i < len; i++) {
-				tmp = arrayLike[i];
-				if ($.is.defined(tmp)) array.push(tmp);
-			}
-		}
-		return array;
-	};
-
-	/**
-	 * Splits a string into an array using the separator and removes empty values from the result.
-	 * @param {string} str - The string to split.
-	 * @param {string} [separator= ] - The separator to use to split the string. Defaults to a single space ( ).
-	 * @param {boolean} [removeEmpty=true] - Whether or not to remove empty values from the final result. Defaults to true.
-	 * @param {boolean} [trimResults=true] - Whether or not to trim the values in the final result. Defaults to true.
-	 * @returns {Array.<string>}
-	 */
-	$.split = function(str, separator, removeEmpty, trimResults){
-		if (!$.is.string(str)) return [];
-		separator = $.is.defined(separator) ? separator : ' ';
-		removeEmpty = $.is.boolean(removeEmpty) ? removeEmpty : true;
-		trimResults = $.is.boolean(trimResults) ? trimResults : true;
-		var result = str.split(separator);
-		for (var i = result.length; i >= 0; i--){
-			if (trimResults) result[i] = $.trim(result[i]);
-			if (removeEmpty && result[i] === '') result.splice(i, 1);
-		}
-		return result;
-	};
-
-	/**
-	 * Parses an attributes value into either a string, boolean, number or JSON value.
-	 * @param {(string|boolean|number)} val - The attribute's string value.
-	 * @returns {(string|boolean|number|object)}
-	 */
-	$.parseAttrValue = function(val){
-		var result = val;
-		if (/^false$/i.test(val)) result = false;
-		else if (/^true$/i.test(val)) result = true;
-		else if (!isNaN(val)) result = +val;
-		else if ($.is.string(val) && ((val.charAt(0) == '{' && val.charAt(val.length - 1) == '}') || (val.charAt(0) == '[' && val.charAt(val.length - 1) == ']'))) result = JSON.parse(val);
-		return result;
-	};
-
-	/**
-	 * Converts the supplied string to a camel cased variant both trimming the string and replacing multiple spaces.
-	 * @param {string} str - The string to convert.
-	 * @returns {string}
-	 */
-	$.toCamelCase = function (str) {
-		return $.trim(str, true).replace(/^([A-Z])|[-\s_](\w)/g, function (match, p1, p2) {
-			if (p2) return p2.toUpperCase();
-			return p1.toLowerCase();
-		});
-	};
-
-	/**
-	 * Converts the supplied string to a hyphen cased variant both trimming the string and replacing multiple spaces.
-	 * @param {string} str - The string to convert.
-	 * @returns {string}
-	 */
-	$.toHyphen = function (str) {
-		return $.trim(str, true).replace(/([a-z])(?:[-\s_])([A-Za-z])|([a-z])([A-Z])/g, '$1$3-$2$4').toLowerCase();
-	};
-
-	/**
-	 * Checks if the first element is a child of the second.
-	 * @param {Node} child - The child element to check.
-	 * @param {Node} parent - The parent element to check within.
-	 * @returns {boolean}
-	 */
-	$.isChildOf = function(child, parent){
-		while ((child = child.parentNode) && child !== parent);
-		return !!child;
-	};
-
-})(FooJitsu);
 (function($){
 	/**
 	 * The namespace used to house common IS checks.
@@ -403,6 +206,333 @@
 			return value in target;
 		}
 		return false;
+	};
+
+})(FooJitsu);
+(function($){
+
+	var prefixes = ['Webkit', 'Moz', 'ms', 'O', 'Khtml'],
+		check = ['transition','transform','transformOrigin','userSelect'],
+		elem = document.createElement('div'),
+		cssReg = /^-(moz|webkit|khtml|o|ms)-([a-z])/,
+		jsReg = /^(Moz|Webkit|Khtml|O|ms)([A-Z])/,
+		regexReplacer = function(match, $1, $2){ return $2.toLowerCase(); },
+		cssTextReplacer = function(match, $1, $2){ return '-'+$1+'-'+$2.toLowerCase(); },
+		cleanName = function(name){
+			if (cssReg.test(name)) name = name.replace(cssReg, regexReplacer);
+			if (jsReg.test(name)) name = name.replace(jsReg, regexReplacer);
+			return $.toCamelCase(name);
+		};
+
+	function supports(name){
+		if ($.is.defined(elem.style[name])) return true;
+		for (var i = 0, len = prefixes.length; i < len; i++){
+			var n = prefixes[i] + name.charAt(0).toUpperCase() + name.substr(1);
+			if ($.is.defined(elem.style[n])) return true;
+		}
+		return false;
+	}
+
+	function prefixed(name){
+		if ($.inArray(name, check) != -1){
+			if ($.is.defined(elem.style[name])) return name;
+			for (var i = 0, len = prefixes.length; i < len; i++){
+				var n = prefixes[i] + name.charAt(0).toUpperCase() + name.substr(1);
+				if ($.is.defined(elem.style[n])) return n;
+			}
+		}
+		return name;
+	}
+
+	function test(props, def){
+		if ($.is.hash(props)){
+			for (var name in props){
+				if (!props.hasOwnProperty(name)) continue;
+				if ($.is.defined(elem.style[name])) return props[name];
+			}
+		}
+		return def;
+	}
+
+	$.browser = {
+		ltEqIE10: Function('/*@cc_on return true@*/')() // this works as only IE10 and below support the @cc_on syntax
+	};
+
+	var __supports__ = {
+		storage: 'localStorage' in window && window['localStorage'] !== null,
+		touch: 'ontouchstart' in window || navigator.msMaxTouchPoints > 0
+	};
+
+	/**
+	 * Checks if the browser supports a particular feature. At present this tests the style of an element for supported CSS properties or a small list of common features such as;
+	 * "storage" - Whether or not the browser supports localStorage.
+	 * "touch" - Whether or not the browser supports touch events.
+	 * @param {string} name - The name of the property or feature to check.
+	 * @returns {boolean}
+	 */
+	$.browser.supports = function(name){
+		name = cleanName(name);
+		if ($.is.defined(__supports__[name])) return __supports__[name];
+		return (__supports__[name] = supports(name));
+	};
+
+	var __name__ = {};
+
+	/**
+	 * Adds the appropriate browser prefix to the beginning of the supplied Javascript or CSS property name.
+	 * @param {string} name - The name of the property to prefix.
+	 * @param {boolean} [cssText] - Whether or not the name should be returned in CSS text format.
+	 * @returns {string}
+	 */
+	$.browser.prefixed = function(name, cssText){
+		name = cleanName(name);
+		name = $.is.defined(__name__[name]) ? __name__[name] : (__name__[name] = prefixed(name));
+		return !!cssText ? $.toHyphen(name.replace(jsReg, cssTextReplacer)) : name;
+	};
+
+	var __events__ = {
+		transitionend: test({ 'transition': 'transitionend', 'OTransition': 'otransitionend', 'MozTransition': 'transitionend', 'WebkitTransition': 'webkitTransitionEnd' }),
+		animationstart: test({ 'animation': 'animationstart', 'OAnimation': 'oanimationstart', 'MozAnimation': 'animationstart', 'WebkitAnimation': 'webkitAnimationStart' }),
+		animationiteration: test({ 'animation': 'animationiteration', 'OAnimation': 'oanimationiteration', 'MozAnimation': 'animationiteration', 'WebkitAnimation': 'webkitAnimationIteration' }),
+		animationend: test({ 'animation': 'animationend', 'OAnimation': 'oanimationend', 'MozAnimation': 'animationend', 'WebkitAnimation': 'webkitAnimationEnd' })
+	};
+
+	/**
+	 * Returns the browser specific event using the supplied name.
+	 * @param {string} name - The event name to check.
+	 * @returns {string}
+	 */
+	$.browser.event = function(name){
+		return $.is.defined(__events__[name]) ? __events__[name] : name;
+	};
+
+})(FooJitsu);
+(function ($) {
+
+	/**
+	 * Empty function
+	 */
+	$.noop = function(){};
+
+	/**
+	 * Waits for the DOM to be accessible and then executes the callback.
+	 * @param {function} callback - The function to execute once ready.
+	 */
+	$.ready = function (callback) {
+		if ($.browser.ltEqIE10 ? document.readyState === "complete" : document.readyState !== "loading") callback($);
+		else setTimeout(function () { $.ready(callback); }, 1);
+	};
+
+	/**
+	 * Used by the FooJitsu constructor, when given an array of args this function returns the correct context to use.
+	 * @param {Array} args - The arguments to check.
+	 * @returns {Node}
+	 */
+	$.getContext = function(args){
+		if ($.is.array(args) && args.length > 1){
+			var ctx = args[args.length - 1];
+			if ($.is.selector(args[0])){
+				if ($.is.self(ctx) && ctx.length == 1) return ctx.get(0);
+				if ($.is.element(ctx)) return ctx;
+			}
+		}
+		return document;
+	};
+
+	/**
+	 * @callback eachCallback
+	 * @param {(number|string)} indexOrName - The index or name of the current item.
+	 * @param {*} value - The current item's value.
+	 * @this *
+	 */
+	/**
+	 * A generic iterator function, which can be used to seamlessly iterate over both objects and arrays.
+	 * Arrays and array-like objects with a length property (such as a function's arguments object) are
+	 * iterated by numeric index, from 0 to length-1. Other objects are iterated via their named properties.
+	 * @param {(Array|object)} target - The array or object to iterate over.
+	 * @param {(eachCallback)} callback - The function that will be executed on every value.
+	 */
+	$.each = function (target, callback) {
+		var result;
+		if ($.is.array(target) || $.is.self(target) || $.is.arrayLike(target)) {
+			for (var i = 0, len = target.length; i < len; i++) {
+				result = callback.call(target[i], i, target[i]);
+				if ($.is.boolean(result) && result === false) break;
+			}
+		} else if ($.is.hash(target)) {
+			for (var name in target) {
+				if (!target.hasOwnProperty(name)) continue;
+				result = callback.call(target[name], name, target[name]);
+				if ($.is.boolean(result) && result === false) break;
+			}
+		}
+	};
+
+	/**
+	 * Merge the contents of two or more objects together into the first object.
+	 * @param {(object|boolean)} deepOrTarget - Whether to perform a deep copy or the target object to receive additional properties.
+	 * @param {object} targetOrObject1 - Either the target object to receive additional properties or an object containing additional properties to merge in.
+	 * @param {...object} [objectN] - Additional objects containing properties to merge in.
+	 * @returns {object}
+	 */
+	$.extend = function (deepOrTarget, targetOrObject1, objectN) {
+		var args = Array.prototype.slice.call(arguments),
+			target = args.shift(), deep = false, src, clone;
+
+		if ($.is.boolean(target)){
+			deep = target;
+			target = args.shift() || {};
+		}
+
+		$.each(args, function(i, obj){
+			if (!$.is.hash(obj) && !$.is.array(obj)) return;
+			$.each(obj, function(name, value){
+				src = target[name];
+				if (target === value) return;
+				if (deep && $.is.array(value)){
+					clone = $.is.array(src) ? src : [];
+					target[name] = $.extend(deep, clone, value);
+				} else if (deep && $.is.hash(value)){
+					clone = $.is.hash(src) ? src : {};
+					target[name] = $.extend(deep, clone, value);
+				} else if ($.is.defined(value)) {
+					target[name] = value;
+				}
+			});
+		});
+		return target;
+	};
+
+	var mouseEvent = /^(?:mouse|pointer|contextmenu|drag|drop)|click/,
+		keyEvent = /^key/,
+		touchEvent = /^touch/,
+		transitionEvent = /^transition/,
+		animationEvent = /^animation/;
+
+	/**
+	 * Given the name of an event, such as click or submit, this returns the type of Event object that should be instantiated.
+	 * @param {string} name - The name of the event.
+	 * @returns {string}
+	 */
+	$.getEventType = function(name){
+		return (mouseEvent.test(name)
+				? 'Mouse' : (keyEvent.test(name)
+					? 'Keyboard' : (touchEvent.test(name)
+						? 'Touch' : ($.browser.supports('transition') && transitionEvent.test(name)
+							? 'Transition' : ($.browser.supports('animation') && animationEvent.test(name)
+								? 'Animation' : ''))))) + 'Event'
+	};
+
+	/**
+	 * Remove the whitespace from the beginning and end of a string and optional replace multiple spaces with a single space.
+	 * @param {string} str - The string to trim.
+	 * @param {boolean} [replaceMultiple=false] - Whether or not to replace multiple spaces with a single space.
+	 * @returns {string}
+	 */
+	$.trim = function (str, replaceMultiple) {
+		if ($.is.undef(str) || str == null) return '';
+		if (!!replaceMultiple) str = str.replace(/[\s\uFEFF\xA0]{2,}/g, ' ');
+		return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+	};
+
+	/**
+	 * Convert an array-like object into a true JavaScript array.
+	 * @param {object} arrayLike - The object to create an array from.
+	 * @returns {Array}
+	 */
+	$.makeArray = function (arrayLike) {
+		var array = [];
+		if ($.is.arrayLike(arrayLike)) {
+			for (var i = 0, len = arrayLike.length, tmp; i < len; i++) {
+				tmp = arrayLike[i];
+				if ($.is.defined(tmp)) array.push(tmp);
+			}
+		}
+		return array;
+	};
+
+	/**
+	 * Search for a specified value within an array and return its index (or -1 if not found).
+	 * @param {*} value - The value to search for.
+	 * @param {Array} array - An array through which to search.
+	 * @returns {number}
+	 */
+	$.inArray = function(value, array){
+		var result = -1;
+		$.each(array, function(i, item){
+			if (item === value){
+				result = i;
+				return false;
+			}
+		});
+		return result;
+	};
+
+	/**
+	 * Splits a string into an array using the separator and removes empty values from the result.
+	 * @param {string} str - The string to split.
+	 * @param {string} [separator= ] - The separator to use to split the string. Defaults to a single space ( ).
+	 * @param {boolean} [removeEmpty=true] - Whether or not to remove empty values from the final result. Defaults to true.
+	 * @param {boolean} [trimResults=true] - Whether or not to trim the values in the final result. Defaults to true.
+	 * @returns {Array.<string>}
+	 */
+	$.split = function(str, separator, removeEmpty, trimResults){
+		if (!$.is.string(str)) return [];
+		separator = $.is.defined(separator) ? separator : ' ';
+		removeEmpty = $.is.boolean(removeEmpty) ? removeEmpty : true;
+		trimResults = $.is.boolean(trimResults) ? trimResults : true;
+		var result = str.split(separator);
+		for (var i = result.length; i >= 0; i--){
+			if (trimResults) result[i] = $.trim(result[i]);
+			if (removeEmpty && result[i] === '') result.splice(i, 1);
+		}
+		return result;
+	};
+
+	/**
+	 * Parses an attributes value into either a string, boolean, number or JSON value.
+	 * @param {(string|boolean|number)} val - The attribute's string value.
+	 * @returns {(string|boolean|number|object)}
+	 */
+	$.parseAttrValue = function(val){
+		var result = val;
+		if (/^false$/i.test(val)) result = false;
+		else if (/^true$/i.test(val)) result = true;
+		else if (!isNaN(val)) result = +val;
+		else if ($.is.string(val) && ((val.charAt(0) == '{' && val.charAt(val.length - 1) == '}') || (val.charAt(0) == '[' && val.charAt(val.length - 1) == ']'))) result = JSON.parse(val);
+		return result;
+	};
+
+	/**
+	 * Converts the supplied string to a camel cased variant both trimming the string and replacing multiple spaces.
+	 * @param {string} str - The string to convert.
+	 * @returns {string}
+	 */
+	$.toCamelCase = function (str) {
+		return $.trim(str, true).replace(/^([A-Z])|[-\s_](\w)/g, function (match, p1, p2) {
+			if (p2) return p2.toUpperCase();
+			return p1.toLowerCase();
+		});
+	};
+
+	/**
+	 * Converts the supplied string to a hyphen cased variant both trimming the string and replacing multiple spaces.
+	 * @param {string} str - The string to convert.
+	 * @returns {string}
+	 */
+	$.toHyphen = function (str) {
+		return $.trim(str, true).replace(/([a-z])(?:[-\s_])([A-Za-z])|([a-z])([A-Z])/g, '$1$3-$2$4').toLowerCase();
+	};
+
+	/**
+	 * Checks if the first element is a child of the second.
+	 * @param {Node} child - The child element to check.
+	 * @param {Node} parent - The parent element to check within.
+	 * @returns {boolean}
+	 */
+	$.isChildOf = function(child, parent){
+		while ((child = child.parentNode) && child !== parent) {}
+		return !!child;
 	};
 
 })(FooJitsu);
@@ -600,69 +730,6 @@
 				});
 			});
 		});
-	};
-
-})(FooJitsu);
-(function($){
-
-	var prefixes = ['Moz', 'Webkit', 'Khtml', 'O', 'ms'],
-		elem = document.createElement('div');
-
-	function test(nameOrHash, style){
-		var test = !!style ? elem.style : elem;
-		if ($.is.string(nameOrHash)){
-			nameOrHash = nameOrHash.charAt(0).toUpperCase() + nameOrHash.substr(1);
-			for (var i = 0, l = prefixes.length; i < l; i++) {
-				if ($.is.string(test[prefixes[i] + nameOrHash])) return true;
-			}
-			return false;
-		}
-		if ($.is.hash(nameOrHash)){
-			for (var name in nameOrHash) {
-				if (!nameOrHash.hasOwnProperty(name)) continue;
-				if ($.is.defined(test[name])) return nameOrHash[name];
-			}
-			return null;
-		}
-	}
-
-	$.browser = {};
-
-	$.browser.storage = (function(w){
-		return 'localStorage' in w && w['localStorage'] !== null;
-	})(window);
-
-	$.browser.touch = (function(w){
-		return 'ontouchstart' in w;
-	})(window);
-
-	$.browser.transitions = test('transition', true);
-
-	$.browser._events = {
-		"transitionend": test({
-			'transition': 'transitionend',
-			'OTransition': 'otransitionend',
-			'MozTransition': 'transitionend',
-			'WebkitTransition': 'webkitTransitionEnd'
-		}, true)
-	};
-
-	$.browser.event = function(name){
-		return $.is.string($.browser._events[name]) ? $.browser._events[name] : name;
-	};
-
-	$.browser._css = {
-		"transform": test({
-			'transform': 'transform',
-			'msTransform': 'msTransform',
-			'OTransform': 'OTransform',
-			'MozTransform': 'MozTransform',
-			'WebkitTransform': 'WebkitTransform'
-		}, true)
-	};
-
-	$.browser.css = function(name){
-		return $.is.string($.browser._css[name]) ? $.browser._css[name] : name;
 	};
 
 })(FooJitsu);
@@ -1027,27 +1094,24 @@
 
 	/**
 	 * Get the value of a computed style property for the first element in the set of matched elements or set one or more CSS properties for every matched element.
+	 * Note: the returned value is the COMPUTED value of the specified style property. This means HEX colors will be returned as RGB and properties such as transform
+	 * will return a matrix value.
 	 * @param {(string|object)} nameOrProps - A CSS property name or an object of property-value pairs to set.
 	 * @param {(string|number)} value - A value to set for the property.
-	 * @param {string} [priority] - A string that specifies the priority of the style.
 	 * @returns {(string|FooJitsu)}
 	 */
-	$.prototype.css = function (nameOrProps, value, priority) {
+	$.prototype.css = function (nameOrProps, value) {
 		// get
 		if ($.is.string(nameOrProps) && $.is.undef(value)){
-			return getComputedStyle(this.get(0), null).getPropertyValue($.browser.css($.toHyphen(nameOrProps)));
+			nameOrProps = $.browser.prefixed(nameOrProps, true);
+			return getComputedStyle(this.get(0), null).getPropertyValue($.toHyphen(nameOrProps));
 		}
 		// set OR remove
-		if ($.is.hash(nameOrProps) && value === 'important'){
-			priority = value;
-			value = '';
-		}
-		if (!$.is.string(priority)) priority = '';
 		function _set(el, name, value){
-			name = $.browser.css($.toHyphen(name));
+			name = $.browser.prefixed(name);
 			if ($.is.number(value)) value = value+'px';
 			if (value === '' || value === null) el.style.removeProperty(name);
-			else el.style.setProperty(name, value, priority);
+			else if ($.is.defined(el.style[name])) el.style[name] = value;
 		}
 		return this.each(function(i, el){
 			if ($.is.hash(nameOrProps)){
@@ -1215,11 +1279,12 @@
 	/**
 	 * Execute all handlers and behaviors attached to the matched elements for the given event type.
 	 * @param {(string|Event)} event - A string containing a JavaScript event type, such as click or submit, or the actual Event object.
+	 * @param {object} props - An object containing any additional properties to set on the event object.
 	 * @returns {FooJitsu}
 	 */
-	$.prototype.trigger = function(event){
+	$.prototype.trigger = function(event, props){
 		if ($.is.string(event)){
-			var name = event, type = $.getEventType(name);
+			var name = $.browser.event(event), type = $.getEventType(event);
 			if (!!document.createEvent) {
 				event = document.createEvent(type);
 				event.initEvent(name, true, true);
@@ -1228,6 +1293,7 @@
 			}
 		}
 		if (!$.is.event(event)) return this;
+		if ($.is.hash(props)) $.extend(true, event, props);
 		return this.each(function(i, el){
 			el.dispatchEvent(event);
 		});
@@ -1250,21 +1316,16 @@
 		var args = Array.prototype.slice.call(arguments), callback, tmp;
 		events = args.shift();
 		handler = args.pop();
+		selector = null;
+		data = null;
 
-		switch (args.length){
-			case 1:
-				tmp = args.shift();
-				selector = $.is.string(tmp) ? tmp : null;
-				data = $.is.hash(tmp) ? tmp : null;
-				break;
-			case 2:
-				selector = args.shift();
-				data = args.shift();
-				break;
-			default:
-				selector = null;
-				data = null;
-				break;
+		if (args.length === 1){
+			tmp = args.shift();
+			selector = $.is.string(tmp) ? tmp : null;
+			data = $.is.hash(tmp) ? tmp : null;
+		} else if (args.length === 2) {
+			selector = args.shift();
+			data = args.shift();
 		}
 
 		if ($.is.string(selector)){
@@ -1335,6 +1396,60 @@
 				$.cache.set(el, '__events__', __events__);
 			});
 		});
+		return this;
+	};
+
+	/**
+	 * Attach a handler to an event for the matched elements. The handler is executed at most once per element per event type.
+	 * @param {string} events - One or more space-separated event types such as "click" or "keydown".
+	 * @param {?string} [selector] - A selector string to filter the descendants of the selected elements that trigger the event. If the selector is null or omitted, the event is always triggered when it reaches the selected element.
+	 * @param {object} [data] - Data to be passed to the handler in event.data when an event is triggered.
+	 * @param {fnEventCallback} [handler] - A function to execute when the event is triggered.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.one = function(events, selector, data, handler){
+		var self = this, callback,
+			onArgs = Array.prototype.slice.call(arguments),
+			offArgs = Array.prototype.slice.call(arguments);
+
+		// get the original handler and remove it from the arguments
+		handler = onArgs.pop();
+		offArgs.pop();
+
+		// remove data from off arguments
+		if (offArgs.length === 2 || offArgs.length === 3){
+			if ($.is.hash(offArgs[1])) offArgs.splice(1, 1);
+			if ($.is.hash(offArgs[2])) offArgs.splice(2, 1);
+		}
+		// create new callback that self unbinds
+		callback = function(e){
+			self.off.apply(self, offArgs);
+			handler.call(this, e);
+		};
+		// add the new callback to the arguments
+		onArgs.push(callback);
+		offArgs.push(callback);
+
+		return this.on.apply(this, onArgs);
+	};
+
+	/**
+	 * Attach an event handler to the transitionend event for the matched elements. When using this method in a browser that does not support
+	 * transitions the handler is executed immediately and the event.propertyName is set to an empty string and the event.elapsedTime is set to 0 (zero).
+	 * @param {object} [data] - Data to be passed to the handler in event.data when an event is triggered.
+	 * @param {fnEventCallback} [handler] - A function to execute when the event is triggered.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.transitionend = function(data, handler){
+		var self = this, args = Array.prototype.slice.call(arguments);
+		args.unshift('transitionend');
+		this.one.apply(this, args);
+		if (!$.browser.supports('transition')){
+			// delay execution by a millisecond to simulate an event being executed asynchronously and allow any chained functions to execute
+			setTimeout(function(){
+				self.trigger('transitionend', {propertyName: '', elapsedTime: 0});
+			}, 1);
+		}
 		return this;
 	};
 
