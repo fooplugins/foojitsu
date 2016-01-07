@@ -39,7 +39,6 @@ module.exports = function(grunt){
 		gitpush: {
 			release: {
 				options: {
-					all: true,
 					tags: true
 				}
 			}
