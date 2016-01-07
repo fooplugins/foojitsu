@@ -37,7 +37,7 @@ This is the default task and compiles all src files and outputs the results into
 
 ####grunt test
 
-This runs the **build** task and then executes all QUnit tests found in **/compiled/tests/** directory using PhantomJS. 
+This runs the **build** task and then executes all QUnit tests found in the **/compiled/tests/** directory using PhantomJS. 
 
 ####grunt release
 
