@@ -19,74 +19,91 @@ module.exports = function (grunt) {
 			},
 			js: {
 				src: [
-					"src/foojitsu.js",
-					"src/is.js",
-					"src/browser.js",
-					"src/static.js",
-					"src/deferred.js",
-					"src/cache.js",
-					"src/fn.js",
-					"src/events.js"
+					'src/js/foojitsu.js',
+					'src/js/is.js',
+					'src/js/browser.js',
+					'src/js/static.js',
+					'src/js/deferred.js',
+					'src/js/cache.js',
+					'src/js/fn.js',
+					'src/js/events.js'
 				],
 				dest: 'compiled/<%= pkg.name %>.js'
 			}
 		},
 		replace: {
-			dist: {
+			options: {
+				patterns: [{ match: 'version', replacement: '<%= pkg.version %>' }]
+			},
+			js: {
+				files: [{expand: true, flatten: true, src: ['compiled/<%= pkg.name %>.js'], dest: 'compiled/'}]
+			},
+			readme: {
+				files: [{expand: true, flatten: true, src: ['src/README.md'], dest: 'compiled/'}]
+			},
+			tests: {
 				options: {
-					patterns: [{
-						match: 'version',
-						replacement: '<%= pkg.version %>'
-					}]
+					patterns: [{ match: 'file', replacement: '../<%= pkg.name %>.js' }]
 				},
-				files: [
-					{expand: true, flatten: true, src: ['compiled/<%= pkg.name %>.js'], dest: 'compiled/'}
-				]
+				files: [{ expand: true, flatten: true, src: ['src/tests/*.html'], dest: 'compiled/tests/' }]
+			},
+			tests_min: {
+				options: {
+					patterns: [{ match: 'file', replacement: '../<%= pkg.name %>.min.js' }]
+				},
+				files: [{
+					expand: true,
+					cwd: 'src/tests/',
+					src: ['*.html'],
+					dest: 'compiled/tests/',
+					rename: function(dest, src){
+						return dest + src.replace(/(\.html|\.htm)$/, '.min$1');
+					}
+				}]
 			}
 		},
 		uglify: {
-			prod: {
+			js: {
 				options: {
 					preserveComments: 'some',
 					mangle: {
-						except: [ "undefined" ]
+						except: [ 'undefined' ]
 					}
 				},
 				files: {
-					'compiled/<%= pkg.name %>.min.js': ["compiled/<%= pkg.name %>.js"]
+					'compiled/<%= pkg.name %>.min.js': ['compiled/<%= pkg.name %>.js']
 				}
 			}
 		},
 		qunit: {
-			all: ['tests/*.html'],
-			// the below are so you can execute a single test manually during development, they're not used in any registered tasks
-			foojitsu: ['tests/foojitsu.html'],
-			deferred: ['tests/deferred.html'],
-			fn: ['tests/fn.html'],
-			is: ['tests/is.html'],
-			static: ['tests/static.html'],
-			cache: ['tests/cache.html'],
-			events: ['tests/events.html'],
-			browser: ['tests/browser.html']
+			all: ['compiled/tests/*.html']
 		},
 		copy: {
-			version: {
+			tests: {
+				files: [{
+					expand: true,
+					cwd: 'src/tests/content/',
+					src: ['*.*'],
+					dest: 'compiled/tests/content/'
+				}]
+			},
+			readme: {
+				files: [{
+					expand: true,
+					cwd: 'compiled/',
+					src: ['README.md'],
+					dest: ''
+				}]
+			},
+			release: {
 				files: [{
 					expand: true,
 					cwd: 'compiled/',
 					src: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js'],
 					dest: 'releases/',
 					rename: function(dest, src){
-						return dest + src.replace(/(.min.js|.js)/, '-'+grunt.config('pkg.version')+'$1');
+						return dest + src.replace(/(.min.js|.js)$/, '-'+grunt.config('pkg.version')+'$1');
 					}
-				}]
-			},
-			latest: {
-				files: [{
-					expand: true,
-					cwd: 'compiled/',
-					src: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js'],
-					dest: 'releases/'
 				}]
 			}
 		}
@@ -100,7 +117,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-qunit');
 
-	grunt.registerTask('build', ['clean','concat','replace','uglify']);
+	grunt.registerTask('build', ['clean','concat','replace','copy:tests','uglify']);
 	grunt.registerTask('default', ['build']);
 	grunt.registerTask('test', ['default','qunit:all']);
 
@@ -113,5 +130,5 @@ module.exports = function (grunt) {
 		grunt.log.ok();
 		return true;
 	});
-	grunt.registerTask('release', ['release-exists','test','copy']);
+	grunt.registerTask('release', ['release-exists','test','copy:release','copy:readme']);
 };

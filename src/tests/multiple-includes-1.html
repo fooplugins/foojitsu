@@ -17,11 +17,12 @@
 	</div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
-<script src="../compiled/foojitsu.min.js"></script>
+<script src="@@file"></script>
 <script>
 	QUnit.module('FooJitsu - Multiple includes');
-	QUnit.test('0.0.0 vs Current', function(assert){
+	QUnit.test('0.0.0 vs @@version', function(assert){
 		assert.equal(typeof FooJitsu.getContext, 'function', 'functions included');
+		assert.equal(FooJitsu.version, '@@version', 'correct version');
 	});
 </script>
 </body>
