@@ -10,10 +10,10 @@ At the moment we are making use of the awesome free service [rawgit.com](https:/
 please use the following:
 
 ```html
-<script src="https://cdn.rawgit.com/fooplugins/foojitsu/compiled/releases/foojitsu-1.0.3.min.js"></script>
+<script src="https://cdn.rawgit.com/fooplugins/foojitsu/1.0.3/foojitsu.min.js"></script>
 ```
 
-Or grab the files directly from the releases folder and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
+Or grab the compiled files from the repo's root and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
 
 ```javascript
 // shortcut for document ready, same as calling FooJitsu.ready(callback)
@@ -41,12 +41,13 @@ This runs the **build** task and then executes all QUnit tests found in the **/c
 
 ####grunt release
 
-This first checks if a release with the current **pkg.version** exists in the **/releases/** directory. If it does exist the task will fail and warn you to 
-update the version number in the **package.json** file. If no release exists it then runs the **test** task. If all tests pass, the *README.md* from the output of the 
-**build** task is copied to the root directory, and the *foojitsu.js* and *foojitsu.min.js* files are copied to the **/releases/** directory and have the current version 
-appended (ex: *foojitsu-1.0.3.js* or *foojitsu-1.0.3.min.js*).
+This first checks if a release with the current **pkg.version** exists in the root directory. If it does exist the task will fail and warn you to 
+update the version number in the **package.json** file. If no release exists it then runs the **test** task. If all tests pass, the *README.md*, 
+*foojitsu.js* and *foojitsu.min.js* files from the output of the **build** task are copied to the root directory. Once copied this executes the 
+following git tasks in the order displayed:
 
-##Notes
+1. gitadd - Stages all files with changes. This adds, modifies, and removes index entries to match the working tree.
+2. gitcommit - Commits all staged changes to the local repo using the title "New Release X.X.X".
+3. gittag - Tags the commit with the version number. This is basically a snapshot for [rawgit.com](https://rawgit.com/), without it releases are not accessible.
 
-When checking in a new release tag the commit with "compiled", move the tag if it already exists. This tag acts like a snapshot in time 
-for [rawgit.com](https://rawgit.com/), without it the new release will not be accessible.
+Once the task is successfully completed you will just need to push the changes to GitHub.
