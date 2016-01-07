@@ -10,10 +10,10 @@ At the moment we are making use of the awesome free service [rawgit.com](https:/
 please use the following:
 
 ```html
-<script src="https://cdn.rawgit.com/fooplugins/foojitsu/1.0.3/foojitsu.min.js"></script>
+<script src="//cdn.rawgit.com/fooplugins/foojitsu/1.0.3/foojitsu.min.js"></script>
 ```
 
-Or grab the compiled files from the repo's root and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
+Or grab the compiled files from the repo's root directory and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
 
 ```javascript
 // shortcut for document ready, same as calling FooJitsu.ready(callback)
@@ -39,12 +39,16 @@ This is the default task and compiles all src files and outputs the results into
 
 This runs the **build** task and then executes all QUnit tests found in the **/compiled/tests/** directory using PhantomJS. 
 
+####grunt readme
+
+This task process the **README.md** in the **/src/** directory and overwrites the one located in the root directory.
+
 ####grunt release
 
 This first checks if a release with the current **pkg.version** exists in the root directory. If it does exist the task will fail and warn you to 
-update the version number in the **package.json** file. If no release exists it then runs the **test** task. If all tests pass, the *README.md*, 
-*foojitsu.js* and *foojitsu.min.js* files from the output of the **build** task are copied to the root directory. Once copied this executes the 
-following git tasks in the order displayed:
+update the version number in the **package.json** file. If no release exists it then runs the **test** task. If all tests pass, the **readme** task is
+executed and the *foojitsu.js* and *foojitsu.min.js* files from the output of the **build** task are copied to the root directory. Once copied the 
+following git tasks are executed:
 
 1. gitadd - Stages all files with changes. This adds, modifies, and removes index entries to match the working tree.
 2. gitcommit - Commits all staged changes to the local repo using the title "New Release X.X.X".
