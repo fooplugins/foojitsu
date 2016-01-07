@@ -1,4 +1,5 @@
 (function($){
+	if ($.version !== '@@version') return;
 
 	/**
 	 * Execute all handlers and behaviors attached to the matched elements for the given event type.
@@ -16,11 +17,13 @@
 				event = new window[type](name, { 'bubbles': true, 'cancelable': true });
 			}
 		}
-		if (!$.is.event(event)) return this;
-		if ($.is.hash(props)) $.extend(true, event, props);
-		return this.each(function(i, el){
-			el.dispatchEvent(event);
-		});
+		if ($.is.event(event)) {
+			if ($.is.hash(props)) $.extend(true, event, props);
+			$.each(this, function(i, el){
+				el.dispatchEvent(event);
+			});
+		}
+		return this;
 	};
 
 	/**
@@ -70,14 +73,12 @@
 				handler.call(this, e);
 			};
 		} else {
-			callback = function(e){
-				handler.call(this, e);
-			};
+			callback = handler;
 		}
 
 		var self = this;
 		$.each($.split(events), function(i, name){
-			self.each(function(i, el){
+			$.each(self, function(i, el){
 				$.cache.get(el, '__events__').push({name: name, selector: selector, handler: callback, original: handler});
 				el.addEventListener($.browser.event(name), callback, false);
 			});
@@ -102,7 +103,7 @@
 
 		var self = this, names = $.split(events);
 		if (names.length === 0){
-			self.each(function(i, el){
+			$.each(self, function(i, el){
 				var __events__ = $.cache.get(el, '__events__');
 				$.each(__events__, function(i, e){
 					el.removeEventListener($.browser.event(e.name), e.handler, false);
@@ -111,22 +112,28 @@
 			});
 		} else {
 			$.each(names, function(i, name){
-				self.each(function(x, el){
-					var __events__ = $.cache.get(el, '__events__'), remove = [];
+				$.each(self, function(x, el){
+					var __events__ = $.cache.get(el, '__events__'), remove = [], found = false;
 					$.each(__events__, function(i, e){
 						if ((l && s && e.name === name && e.selector === selector && e.original === handler)
 							|| (l && !s && e.name === name && e.original === handler)
 							|| (!l && s && e.name === name && e.selector === selector)
 							|| (!l && !s && e.name === name)){
+							found = true;
 							el.removeEventListener($.browser.event(name), e.handler, false);
 							remove.push(i);
 						}
 					});
-					remove.sort(function(a, b){ return b - a; });
-					$.each(remove, function(i, index){
-						__events__.splice(index);
-					});
-					$.cache.set(el, '__events__', __events__);
+					if (found){
+						remove.sort(function(a, b){ return b - a; });
+						$.each(remove, function(i, index){
+							__events__.splice(index);
+						});
+						$.cache.set(el, '__events__', __events__);
+					}
+					if ($.is.string(name) && $.is.fn(handler)){
+						el.removeEventListener($.browser.event(name), handler, false);
+					}
 				});
 			});
 		}

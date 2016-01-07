@@ -1,4 +1,5 @@
 (function ($) {
+	if ($.version !== '@@version') return;
 
 	/**
 	 * Empty function
@@ -10,8 +11,12 @@
 	 * @param {function} callback - The function to execute once ready.
 	 */
 	$.ready = function (callback) {
-		if ($.browser.ltEqIE10 ? document.readyState === "complete" : document.readyState !== "loading") callback($);
-		else setTimeout(function () { $.ready(callback); }, 1);
+		function onready(){
+			try { callback.call(window, $); }
+			catch(err) { console.error(err); }
+		}
+		if ($.browser.ltEqIE10 ? document.readyState === "complete" : document.readyState !== "loading") onready();
+		else document.addEventListener('DOMContentLoaded', onready, false);
 	};
 
 	/**

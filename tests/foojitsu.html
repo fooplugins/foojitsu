@@ -16,7 +16,7 @@
 	<div id="child-4" class="child"></div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
-<script src="../compiled/foojitsu.js"></script>
+<script src="../compiled/foojitsu.min.js"></script>
 <script>
 	QUnit.module('FooJitsu:ctor');
 	QUnit.test('initialize without "new" keyword', function (assert) {
@@ -62,12 +62,38 @@
 		assert.equal($children[3], elements[3], 'element @ index 3');
 	});
 	QUnit.test('initialize using a function', function(assert){
-		var done = assert.async();
+		assert.expect(5);
+		var done1 = assert.async(),
+				done2 = assert.async();
 		FooJitsu(function($){
 			assert.ok(true, 'callback executed');
 			assert.equal($, FooJitsu, 'arg1 is FooJitsu');
-			done();
+			assert.ok(!!document.querySelector('#root'), 'DOM accessible');
+			done1();
 		});
+
+		FooJitsu(function(){
+			throw new Error('EXPECTED');
+		});
+
+		FooJitsu(function($){
+			assert.ok(true, 'callback executed');
+			assert.equal($, FooJitsu, 'arg1 is FooJitsu');
+			done2();
+		});
+	});
+	QUnit.test('versionCompare', function(assert){
+		assert.ok(FooJitsu.versionCompare('0', '0') === 0, '');
+		assert.ok(FooJitsu.versionCompare('0.0', '0') === 0, '');
+		assert.ok(FooJitsu.versionCompare('0.0', '0.0.0') === 0, '');
+		assert.ok(FooJitsu.versionCompare('0.1', '0.0.0') > 0, '');
+		assert.ok(FooJitsu.versionCompare('0.1', '0.0.1') > 0, '');
+		assert.ok(FooJitsu.versionCompare('1', '0.1') > 0, '');
+		assert.ok(FooJitsu.versionCompare('1.10', '1.9') > 0, '');
+		assert.ok(FooJitsu.versionCompare('1.9', '1.10') < 0, '');
+		assert.ok(FooJitsu.versionCompare('1', '1.1') < 0, '');
+		assert.ok(FooJitsu.versionCompare('1.0.9', '1.1') < 0, '');
+		assert.ok(isNaN(FooJitsu.versionCompare('ASDASd', '1.1')), '');
 	});
 </script>
 </body>

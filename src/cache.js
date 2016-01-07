@@ -1,4 +1,5 @@
 (function($){
+	if ($.version !== '@@version') return;
 
 	/**
 	 * The expando property name used by this instance of FooJitsu.
@@ -41,7 +42,7 @@
 	$.CacheManager.prototype.uid = function(el, cacheAttributes){
 		cacheAttributes = !!cacheAttributes;
 		var id;
-		if ($.is.element(el)){
+		if ($.is.element(el) || el === window){
 			if (!$.is.number(id = el[$.expando])){
 				id = new Date().getTime();
 				Object.defineProperty(el, $.expando, { value: id, configurable: true });

@@ -1,4 +1,5 @@
 (function ($) {
+	if ($.version !== '@@version') return;
 
 	/**
 	 * @callback fnEachCallback
@@ -12,7 +13,10 @@
 	 * @returns {FooJitsu}
 	 */
 	$.prototype.each = function (callback) {
-		$.each(this, callback);
+		$.each(this, function(i, el){
+			if (el === window) return;
+			callback.call(window, i, el);
+		});
 		return this;
 	};
 
@@ -30,6 +34,7 @@
 	 */
 	$.prototype.map = function(callback){
 		return $.map(this, function(el, index){
+			if (el === window) return;
 			return callback.call(el, index, el);
 		});
 	};
@@ -243,7 +248,8 @@
 		// get
 		if ($.is.string(nameOrProps) && $.is.undef(value)){
 			nameOrProps = $.browser.prefixed(nameOrProps, true);
-			return getComputedStyle(this.get(0), null).getPropertyValue($.toHyphen(nameOrProps));
+			var el = this.get(0);
+			return $.is.element(el) ? getComputedStyle(el, null).getPropertyValue(nameOrProps) : null;
 		}
 		// set OR remove
 		function _set(el, name, value){
@@ -273,7 +279,7 @@
 		// get
 		if ($.is.undef(value) && (nameOrAttr === null || $.is.undef(nameOrAttr) || $.is.string(nameOrAttr))){
 			var el = this.get(0);
-			if (!el.hasAttributes()) return;
+			if (!$.is.element(el) || !el.hasAttributes()) return;
 			if ($.is.string(nameOrAttr)){
 				return $.parseAttrValue(el.getAttribute($.toHyphen(nameOrAttr)));
 			} else {
@@ -308,7 +314,8 @@
 	 */
 	$.prototype.data = function(keyOrObj, value){
 		if ($.is.undef(keyOrObj) || ($.is.string(keyOrObj) && $.is.undef(value))){
-			return $.cache.get(this.get(0), keyOrObj);
+			var el = this.get(0);
+			return $.is.element(el) ? $.cache.get(this.get(0), keyOrObj) : null;
 		}
 		return this.each(function(i, el){
 			$.cache.set(el, keyOrObj, value);
@@ -328,11 +335,12 @@
 	/**
 	 * Waits for content (images and iframes) to load before executing the callback function.
 	 * @param {function} callback - The function to execute once all content is loaded.
+	 * @param {*} [context] - The value used as the context, the "this" keyword, of the callback. If not supplied the FooJitsu object the function was originally called on is used.
 	 */
-	$.prototype.contentLoaded = function(callback){
+	$.prototype.contentLoaded = function(callback, context){
 		var self = this, loadables = this.find('img,iframe'),
 			results = 0, expected = loadables.length, retry = 0;
-
+		context = $.is.defined(context) ? context : self;
 		$.each(loadables, function(i, loadable){
 			if (loadable.complete){
 				results++;
@@ -349,7 +357,7 @@
 				retry++;
 				setTimeout(check, 200);
 			}
-			else callback.call(self);
+			else callback.call(context);
 		}
 		check();
 	};

@@ -1,9 +1,14 @@
 (function($){
+	if ($.version !== '@@version') return;
+
 	/**
-	 * The namespace used to house common IS checks.
-	 * @namespace
+	 * Checks if the element matches the supplied selector.
+	 * @param {HTMLElement} el - The element to test.
+	 * @param {string} selector - The selector to test with.
+	 * @returns {boolean}
 	 */
 	$.is = function(el, selector){
+		if (!$.is.element(el)) return false;
 		var p = selector.split(','), result = false;
 		$.each(p, function (i, s) {
 			s = s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');

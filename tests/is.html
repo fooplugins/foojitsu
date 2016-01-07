@@ -16,9 +16,22 @@
 	<div id="child-4" class="child"></div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
-<script src="../compiled/foojitsu.js"></script>
+<script src="../compiled/foojitsu.min.js"></script>
 <script>
 	QUnit.module('FooJitsu.is');
+	QUnit.test('is', function(assert){
+		var root = document.querySelector('#root');
+		assert.ok(FooJitsu.is(root, '#root'), 'is(root, "#root")');
+		assert.ok(FooJitsu.is(root, 'div'), 'is(root, "div")');
+		assert.notOk(FooJitsu.is(root, '.child'), 'is(root, ".child")');
+		assert.notOk(FooJitsu.is({}, '#root'), 'is(object, selector)');
+		assert.notOk(FooJitsu.is('string', '#root'), 'is(string, selector)');
+		assert.notOk(FooJitsu.is(false, '#root'), 'is(bool, selector)');
+		assert.notOk(FooJitsu.is(1, '#root'), 'is(number, selector)');
+		assert.notOk(FooJitsu.is([], '#root'), 'is(array, selector)');
+		assert.notOk(FooJitsu.is(null, '#root'), 'is(null, selector)');
+		assert.notOk(FooJitsu.is(undefined, '#root'), 'is(undefined, selector)');
+	});
 	QUnit.test('self', function(assert){
 		var $root = FooJitsu('#root');
 		assert.ok(FooJitsu.is.self($root), 'self($root)');

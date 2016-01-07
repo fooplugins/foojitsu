@@ -6,13 +6,16 @@
 	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
 	<style>
 		#root {
-			-webkit-transition: width 0.5s ease;
-			-moz-transition: width 0.5s ease;
-			transition: width 0.5s ease;
+			-webkit-transition: width 0.2s ease;
+			-moz-transition: width 0.2s ease;
+			transition: width 0.2s ease;
 			width: 100px;
 		}
 		#root.start-transition {
 			width: 150px;
+		}
+		#root.start-transition-2 {
+			width: 200px;
 		}
 	</style>
 </head>
@@ -24,7 +27,7 @@
 	</div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
-<script src="../compiled/foojitsu.js"></script>
+<script src="../compiled/foojitsu.min.js"></script>
 <script>
 	QUnit.module('FooJitsu.prototype');
 	QUnit.test('trigger', function(assert){
@@ -55,7 +58,7 @@
 		root.removeEventListener('custom', onCustom);
 	});
 	QUnit.test('on', function(assert){
-		assert.expect(12);
+		assert.expect(16);
 		var $root = FooJitsu('#root'),
 				root = $root.get(0),
 				$child = FooJitsu('#child'),
@@ -74,10 +77,17 @@
 			assert.ok(true, 'dblclick handler executed');
 			assert.ok(e instanceof MouseEvent, 'dblclick event type');
 		}
+		function onResize(e){
+			assert.ok(true, 'resize handler executed');
+			assert.ok(e instanceof Event, 'event type');
+		}
 		$root.on('click', onClick).trigger('click').trigger('click');
 		$root.on('custom', {test: 'test'}, onCustom).trigger('custom').trigger('custom');
 		$root.on('dblclick', 'a#child', onDblClick).trigger('dblclick');
 		$child.trigger('dblclick');
+
+
+		FooJitsu(window).on('resize', onResize).trigger('resize').trigger('resize');
 
 		root.removeEventListener('click', onClick);
 		root.removeEventListener('custom', onCustom);
@@ -126,6 +136,7 @@
 		var done = assert.async(),
 				$root = FooJitsu('#root');
 		function onTransitionEnd(e){
+			$root.addClass('start-transition-2');
 			assert.ok(true, 'transitionend handler executed');
 			assert.ok(typeof e.propertyName === 'string', 'transitionend propertyName');
 			assert.ok(typeof e.elapsedTime === 'number', 'transitionend elapsedTime');

@@ -16,15 +16,29 @@
 	<div id="child-4" class="child"></div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
-<script src="../compiled/foojitsu.js"></script>
+<script src="../compiled/foojitsu.min.js"></script>
 <script>
 	QUnit.module('FooJitsu');
 	QUnit.test('ready', function(assert){
-		var done = assert.async();
+		assert.expect(5);
+		var done1 = assert.async(),
+				done2 = assert.async();
+
 		FooJitsu.ready(function($){
 			assert.ok(true, 'Callback executed');
 			assert.equal($, FooJitsu, 'First argument is FooJitsu');
-			done();
+			assert.ok(!!document.querySelector('#root'), 'DOM accessible');
+			done1();
+		});
+
+		FooJitsu(function(){
+			throw new Error('EXPECTED');
+		});
+
+		FooJitsu(function($){
+			assert.ok(true, 'callback executed');
+			assert.equal($, FooJitsu, 'arg1 is FooJitsu');
+			done2();
 		});
 	});
 	QUnit.test('getContext', function(assert){

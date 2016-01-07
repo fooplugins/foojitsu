@@ -1,4 +1,5 @@
 (function ($) {
+	if ($.version !== '@@version') return;
 
 	/**
 	 * @callback beforeStartCallback

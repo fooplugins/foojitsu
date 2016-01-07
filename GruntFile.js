@@ -13,8 +13,8 @@ module.exports = function (grunt) {
 				'* <%= pkg.title %> - <%= pkg.description %>\n' +
 				'* @version <%= pkg.version %>\n' +
 				'* @link <%= pkg.homepage %>\n' +
-				'* @copyright Steven Usher & Brad Vincent 2015\n' +
-				'* @license Released under the MIT license.\n' +
+				'* @copyright <%= pkg.author.name %> <%= grunt.template.today("yyyy") %>\n' +
+				'* @license Released under the <%= pkg.license %> license.\n' +
 				'*/\n'
 			},
 			js: {
@@ -28,7 +28,20 @@ module.exports = function (grunt) {
 					"src/fn.js",
 					"src/events.js"
 				],
-				dest: 'compiled/foojitsu.js'
+				dest: 'compiled/<%= pkg.name %>.js'
+			}
+		},
+		replace: {
+			dist: {
+				options: {
+					patterns: [{
+						match: 'version',
+						replacement: '<%= pkg.version %>'
+					}]
+				},
+				files: [
+					{expand: true, flatten: true, src: ['compiled/<%= pkg.name %>.js'], dest: 'compiled/'}
+				]
 			}
 		},
 		uglify: {
@@ -40,12 +53,13 @@ module.exports = function (grunt) {
 					}
 				},
 				files: {
-					'compiled/foojitsu.min.js': ["compiled/foojitsu.js"]
+					'compiled/<%= pkg.name %>.min.js': ["compiled/<%= pkg.name %>.js"]
 				}
 			}
 		},
 		qunit: {
 			all: ['tests/*.html'],
+			// the below are so you can execute a single test manually during development, they're not used in any registered tasks
 			foojitsu: ['tests/foojitsu.html'],
 			deferred: ['tests/deferred.html'],
 			fn: ['tests/fn.html'],
@@ -54,14 +68,50 @@ module.exports = function (grunt) {
 			cache: ['tests/cache.html'],
 			events: ['tests/events.html'],
 			browser: ['tests/browser.html']
+		},
+		copy: {
+			version: {
+				files: [{
+					expand: true,
+					cwd: 'compiled/',
+					src: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js'],
+					dest: 'releases/',
+					rename: function(dest, src){
+						return dest + src.replace(/(.min.js|.js)/, '-'+grunt.config('pkg.version')+'$1');
+					}
+				}]
+			},
+			latest: {
+				files: [{
+					expand: true,
+					cwd: 'compiled/',
+					src: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js'],
+					dest: 'releases/'
+				}]
+			}
 		}
 	});
 
 	// Load grunt tasks
 	grunt.loadNpmTasks('grunt-contrib-clean');
-	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-replace');
+	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-qunit');
-	grunt.registerTask('default', ['clean','concat','uglify']);
+
+	grunt.registerTask('build', ['clean','concat','replace','uglify']);
+	grunt.registerTask('default', ['build']);
 	grunt.registerTask('test', ['default','qunit:all']);
+
+	grunt.registerTask('release-exists', 'Checks if a release exists using the package.json properties, exits early and prompts you to update the version number if it does.', function() {
+		var file = 'releases/'+grunt.config('pkg.name')+'-'+grunt.config('pkg.version')+'.js';
+		if (grunt.file.exists(file)){
+			grunt.log.error('%s already exists! Update the version in the package.json!', file);
+			return false;
+		}
+		grunt.log.ok();
+		return true;
+	});
+	grunt.registerTask('release', ['release-exists','test','copy']);
 };

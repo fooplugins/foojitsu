@@ -1,4 +1,5 @@
 (function($){
+	if ($.version !== '@@version') return;
 
 	var prefixes = ['Webkit', 'Moz', 'ms', 'O', 'Khtml'],
 		check = ['transition','transform','transformOrigin','userSelect'],
