@@ -18,7 +18,7 @@ module.exports = function(grunt){
 				options: {
 					all: true
 				},
-				files: ['grunt/**/*.*','src/**/*.*','*.*']
+				src: ['grunt/**/*.*','src/**/*.*','*.*']
 			}
 		},
 		gitcommit: {
@@ -26,7 +26,7 @@ module.exports = function(grunt){
 				options: {
 					message: 'New Release <%= pkg.version %>'
 				},
-				files: ['grunt/**/*.*','src/**/*.*','*.*']
+				src: ['grunt/**/*.*','src/**/*.*','*.*']
 			}
 		},
 		gittag: {
