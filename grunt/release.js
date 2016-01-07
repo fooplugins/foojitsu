@@ -4,13 +4,15 @@ module.exports = function(grunt){
 
 	o = _.extend({
 		input: 'compiled/',
-		files: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js','<%= pkg.name %>.css','<%= pkg.name %>.min.css','README.md']
+		files: ['<%= pkg.name %>.js','<%= pkg.name %>.min.js','<%= pkg.name %>.css','<%= pkg.name %>.min.css'],
+		replace: [{ match: 'version', replacement: '<%= pkg.version %>' }]
 	}, o);
 
 	grunt.config.merge({
-		copy: {
+		replace: {
 			release: {
-				files: [{ expand: true, cwd: o.input, src: o.files, dest: '' }]
+				options: { patterns: o.replace },
+				files: [{ expand: true, flatten: true, src: ['src/README.md'], dest: '' }]
 			}
 		},
 		gitadd: {
@@ -53,5 +55,6 @@ module.exports = function(grunt){
 			return true;
 		});
 
-	grunt.registerTask('release', ['version','test','copy:release','gitadd:release','gitcommit:release','gittag:release']);
+	grunt.registerTask('readme', ['replace:release']);
+	grunt.registerTask('release', ['version','test','readme','gitadd:release','gitcommit:release','gittag:release']);
 };

@@ -67,7 +67,7 @@ module.exports = function(grunt){
 				build: {
 					options: { patterns: o.replace },
 					files: [{
-						expand: true, flatten: true, src: [o.output+'<%= pkg.name %>.js',o.output+'<%= pkg.name %>.css','src/README.md'], dest: o.output
+						expand: true, flatten: true, src: [o.output+'<%= pkg.name %>.js',o.output+'<%= pkg.name %>.css'], dest: o.output
 					}]
 				}
 			}
