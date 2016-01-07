@@ -10,7 +10,7 @@ At the moment we are making use of the awesome free service [rawgit.com](https:/
 please use the following:
 
 ```html
-<script src="https://cdn.rawgit.com/fooplugins/foojitsu/master/releases/foojitsu-1.0.3.min.js"></script>
+<script src="https://cdn.rawgit.com/fooplugins/foojitsu/compiled/releases/foojitsu-1.0.3.min.js"></script>
 ```
 
 Or grab the files directly from the releases folder and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
@@ -48,4 +48,5 @@ appended (ex: *foojitsu-1.0.3.js* or *foojitsu-1.0.3.min.js*).
 
 ##Notes
 
-This is just a temporary readme as this library is still in development.
+When checking in a new release tag the commit with "compiled", move the tag if it already exists. This tag acts like a snapshot in time 
+for [rawgit.com](https://rawgit.com/), without it the new release will not be accessible.
