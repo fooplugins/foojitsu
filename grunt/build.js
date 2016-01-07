@@ -4,7 +4,7 @@ module.exports = function(grunt){
 		files = {}, jsmin = {}, cssmin = {};
 
 	o = _.extend({
-		output: 'compiled',
+		output: 'compiled/',
 		replace: [{ match: 'version', replacement: '<%= pkg.version %>' }],
 		js: null,
 		css: null
@@ -14,8 +14,8 @@ module.exports = function(grunt){
 		var tasks = ['clean:build', 'concat:build', 'replace:build'];
 		if (!!o.js){
 			tasks.push('uglify:build');
-			files[o.output+'/<%= pkg.name %>.js'] = o.js;
-			jsmin[o.output+'/<%= pkg.name %>.min.js'] = [o.output+'/<%= pkg.name %>.js'];
+			files[o.output+'<%= pkg.name %>.js'] = o.js;
+			jsmin[o.output+'<%= pkg.name %>.min.js'] = [o.output+'<%= pkg.name %>.js'];
 			grunt.config.merge({
 				uglify: {
 					build: {
@@ -32,8 +32,8 @@ module.exports = function(grunt){
 		}
 		if (!!o.css){
 			tasks.push('cssmin:build');
-			files[o.output+'/<%= pkg.name %>.css'] = o.css;
-			cssmin[o.output+'/<%= pkg.name %>.min.css'] = [o.output+'/<%= pkg.name %>.css'];
+			files[o.output+'<%= pkg.name %>.css'] = o.css;
+			cssmin[o.output+'<%= pkg.name %>.min.css'] = [o.output+'<%= pkg.name %>.css'];
 			grunt.config.merge({
 				cssmin: {
 					build: {
@@ -67,7 +67,7 @@ module.exports = function(grunt){
 				build: {
 					options: { patterns: o.replace },
 					files: [{
-						expand: true, flatten: true, src: [o.output+'/<%= pkg.name %>.js',o.output+'/<%= pkg.name %>.css','src/README.md'], dest: o.output+'/'
+						expand: true, flatten: true, src: [o.output+'<%= pkg.name %>.js',o.output+'<%= pkg.name %>.css','src/README.md'], dest: o.output
 					}]
 				}
 			}

@@ -3,8 +3,8 @@ module.exports = function(grunt){
 		o = grunt.config('test') || {};
 
 	o = _.extend({
-		input: 'src/tests',
-		output: 'compiled/tests',
+		input: 'src/tests/',
+		output: 'compiled/tests/',
 		replace: [{ match: 'version', replacement: '<%= pkg.version %>' }]
 	}, o);
 
@@ -14,14 +14,14 @@ module.exports = function(grunt){
 				options: {
 					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../<%= pkg.name %>.js' }])
 				},
-				files: [{ expand: true, flatten: true, src: [o.input+'/*.html'], dest: o.output+'/' }]
+				files: [{ expand: true, flatten: true, src: [o.input+'*.html'], dest: o.output }]
 			},
 			test_min: {
 				options: {
 					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../<%= pkg.name %>.min.js' }])
 				},
 				files: [{
-					expand: true, flatten: true, src: [o.input+'/*.html'], dest: o.output+'/',
+					expand: true, flatten: true, src: [o.input+'*.html'], dest: o.output,
 					rename: function(dest, src){
 						return dest + src.replace(/(\.html|\.htm)$/, '.min$1');
 					}
@@ -32,14 +32,14 @@ module.exports = function(grunt){
 			test: {
 				files: [{
 					expand: true,
-					cwd: o.input+'/content/',
+					cwd: o.input+'content/',
 					src: ['*.*'],
-					dest: o.output+'/content/'
+					dest: o.output+'content/'
 				}]
 			}
 		},
 		qunit: {
-			test: [o.output+'/*.html']
+			test: [o.output+'*.html']
 		}
 	});
 
