@@ -35,13 +35,6 @@ module.exports = function(grunt){
 					tag: '<%= pkg.version %>'
 				}
 			}
-		},
-		gitpush: {
-			release: {
-				options: {
-					tags: true
-				}
-			}
 		}
 	});
 
@@ -60,5 +53,5 @@ module.exports = function(grunt){
 			return true;
 		});
 
-	grunt.registerTask('release', ['version','test','copy:release','gitadd:release','gitcommit:release','gittag:release','gitpush:release']);
+	grunt.registerTask('release', ['version','test','copy:release','gitadd:release','gitcommit:release','gittag:release']);
 };

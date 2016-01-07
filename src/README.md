@@ -49,4 +49,5 @@ following git tasks in the order displayed:
 1. gitadd - Stages all files with changes. This adds, modifies, and removes index entries to match the working tree.
 2. gitcommit - Commits all staged changes to the local repo using the title "New Release X.X.X".
 3. gittag - Tags the commit with the version number. This is basically a snapshot for [rawgit.com](https://rawgit.com/), without it releases are not accessible.
-4. gitpush - Pushes all commits and tags to the server.
+
+Once the task is successfully completed you will just need to push the changes to GitHub.
