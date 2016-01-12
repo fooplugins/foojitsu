@@ -43,5 +43,6 @@ module.exports = function(grunt){
 		}
 	});
 
-	grunt.registerTask('test', ['build', 'replace:test', 'replace:test_min', 'copy:test', 'qunit:test']);
+	grunt.registerTask('build-tests', ['build', 'replace:test', 'replace:test_min', 'copy:test']);
+	grunt.registerTask('test', ['build-tests', 'qunit:test']);
 };
