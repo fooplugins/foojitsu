@@ -99,7 +99,7 @@
 						? this._events[id]
 						: (this._events[id] = []))
 					: this.data[id][key])
-				: this.data[id])
+				: $.filter(this.data[id], function(name){ return name.substr(0, 2) !== '__'; }))
 			: undefined;
 	};
 
