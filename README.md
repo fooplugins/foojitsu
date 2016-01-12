@@ -29,15 +29,17 @@ For now check out the tests for a list of supported functions.
 
 ##Build
 
-There are three Grunt tasks associated with the build process; **build**, **test** and **release**.
+There are four Grunt tasks associated with the build process; **build**, **test**, **readme** and **release**.
 
 ####grunt OR grunt build
 
-This is the default task and compiles all src files and outputs the results into the **/compiled/** directory.
+This is the default task and compiles all **/src/js/** files and outputs the results into the **/compiled/** directory.
 
 ####grunt test
 
-This runs the **build** task and then executes all QUnit tests found in the **/compiled/tests/** directory using PhantomJS. 
+This runs the **build** task and if successful then compiles all tests found in **/src/test/** directory and outputs two html files for each test 
+into the **/compiled/tests/** directory, one using the concatenated version of the library and the other using the minified. The task then executes 
+all tests found in the **/compiled/tests/** directory using QUnit and PhantomJS. 
 
 ####grunt readme
 
