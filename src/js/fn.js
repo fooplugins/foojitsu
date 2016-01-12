@@ -365,6 +365,25 @@
 	};
 
 	/**
+	 * Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
+	 * @param {string} [selector] - The selector to filter the parent elements by.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.parent = function(selector){
+		var map = this.map(function(i, el){
+			if ($.is.string(selector)){
+				var parent = null, tmp = el;
+				while (parent === null && !!(tmp = tmp.parentNode)){
+					if ($.is(tmp, selector)) parent = tmp;
+				}
+				return parent;
+			}
+			return el.parentNode;
+		});
+		return $(map, this.context);
+	};
+
+	/**
 	 * Get the immediately preceding sibling of each element in the set of matched elements, optionally filtered by a selector.
 	 * @param {string} [selector] - The selector to filter the previous sibling elements by.
 	 * @returns {FooJitsu}
@@ -466,6 +485,22 @@
 	};
 
 	/**
+	 * Get the combined text contents of each element in the set of matched elements, including their descendants, or set the text contents of the matched elements.
+	 * @param {*} value - The text to set as the content of each matched element. When the value is not a String, it will be converted to one.
+	 * @returns {(string|FooJitsu)}
+	 */
+	$.prototype.text = function(value){
+		if ($.is.undef(value)){
+			var el = this.get(0);
+			return $.is.element(el) ? el.textContent : null;
+		}
+		// set
+		return this.each(function(i, el){
+			el.textContent = value + '';
+		});
+	};
+
+	/**
 	 * Used to get or set a CSS property value that uses pixels.
 	 * @param {string} name - The CSS property name.
 	 * @param {(string|number)} value - A value to set for the property.
@@ -474,7 +509,8 @@
 	 */
 	$.prototype.__cssPixelProp__ = function(name, value){
 		if ($.is.undef(value)){
-			return parseFloat(this.css(name));
+			var result = parseFloat(this.css(name));
+			return isNaN(result) ? null : result;
 		}
 		return this.css(name, value);
 	};

@@ -18,6 +18,10 @@
 		</div>
 	</div>
 	<div id="child-4" class="child"></div>
+	<div id="text-1">Sample text <em>with</em> some formatting.</div>
+	<div id="text-2">
+		Sample text <em>with</em> some formatting.
+	</div>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
 <script src="@@file"></script>
@@ -92,6 +96,16 @@
 		assert.equal($children.length, 2, 'find(".child:not(#child-1)")');
 		$children = $root.find('.nothing');
 		assert.equal($children.length, 0, 'find(".nothing")');
+	});
+	QUnit.test('parent', function(assert){
+		var root = document.querySelector('#root'),
+				children = root.querySelectorAll('.child'),
+				$root = FooJitsu('#root'),
+				$children = $root.find('.child');
+
+		var $parentChildren = $children.parent();
+		assert.equal($parentChildren.length, 1, 'children.parent length');
+		assert.equal($parentChildren[0], root, 'element @ index 0');
 	});
 	QUnit.test('prev', function(assert){
 		var root = document.querySelector('#root'),
@@ -344,6 +358,19 @@
 			assert.equal((iframe.contentDocument || iframe.contentWindow.document).readyState, 'complete', 'frame loaded');
 			done();
 		});
+	});
+	QUnit.test('text', function(assert){
+		var text1 = document.querySelector('#text-1'),
+				$text1 = FooJitsu('#text-1'),
+				text2 = document.querySelector('#text-2'),
+				$text2 = FooJitsu('#text-2'),
+				$texts = FooJitsu('#text-1, #text-2');
+
+		assert.equal($text1.text(), text1.textContent, 'text1 text');
+		assert.equal($text2.text(), text2.textContent, 'text2 text');
+		$texts.text('updated multiple texts');
+		assert.equal(text1.textContent, 'updated multiple texts', 'text1 updated text');
+		assert.equal(text2.textContent, 'updated multiple texts', 'text2 updated text');
 	});
 </script>
 </body>
