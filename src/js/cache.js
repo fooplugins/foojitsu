@@ -14,6 +14,7 @@
 	 */
 	$.CacheManager = function(){
 		if (!(this instanceof $.CacheManager)) return new $.CacheManager();
+		this._uid = 0;
 		/**
 		 * An object used to store cached data.
 		 * @type {object}
@@ -44,7 +45,8 @@
 		var id;
 		if ($.is.element(el) || el === window){
 			if (!$.is.number(id = el[$.expando])){
-				id = new Date().getTime();
+				this._uid++;
+				id = this._uid;
 				Object.defineProperty(el, $.expando, { value: id, configurable: true });
 			}
 			if (cacheAttributes && !this._attr[id]){
@@ -123,6 +125,18 @@
 			}
 		}
 		if (merge) this.data[id] = $.extend(true, this.data[id], obj);
+	};
+
+	/**
+	 * Removes any cached data for the element using the specified key.
+	 * @param {HTMLElement} el - The element to remove data from.
+	 * @param {string} key - A string naming the piece of data to remove.
+	 */
+	$.CacheManager.prototype.remove = function(el, key){
+		var id;
+		if ($.is.string(key) && $.is.number(id = this.uid(el)) && $.is.defined(this.data[id]) && $.is.defined(this.data[id][key])){
+			delete this.data[id][key];
+		}
 	};
 
 	$.cache = new $.CacheManager();
