@@ -336,8 +336,9 @@
 	 * Waits for content (images and iframes) to load before executing the callback function.
 	 * @param {function} callback - The function to execute once all content is loaded.
 	 * @param {*} [context] - The value used as the context, the "this" keyword, of the callback. If not supplied the FooJitsu object the function was originally called on is used.
+	 * @returns {FooJitsu}
 	 */
-	$.prototype.contentLoaded = function(callback, context){
+	$.prototype.loaded = function(callback, context){
 		var self = this, loadables = this.find('img,iframe'),
 			results = 0, expected = loadables.length, retry = 0;
 		context = $.is.defined(context) ? context : self;
@@ -355,11 +356,12 @@
 		function check(){
 			if (results < expected && retry <= 10){
 				retry++;
-				setTimeout(check, 200);
+				setTimeout(check, 10);
 			}
 			else callback.call(context);
 		}
 		check();
+		return this;
 	};
 
 	/**

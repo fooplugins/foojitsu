@@ -333,13 +333,13 @@
 		assert.equal($root.data('number'), update.number, 'data("number"):hash-updated');
 		assert.propEqual($root.data('json'), {"string": "test", "bool": true, "number": 35, "empty": true, "arr": [1,2,3]}, 'data("json"):hash-updated');
 	});
-	QUnit.test('contentLoaded', function(assert){
+	QUnit.test('loaded', function(assert){
 		assert.expect(2);
 		var done = assert.async(),
 				$root = FooJitsu('#root'),
 				img = document.querySelector('#test-image'),
 				iframe = document.querySelector('#test-frame');
-		$root.contentLoaded(function(){
+		$root.loaded(function(){
 			assert.ok(img.complete, 'image loaded');
 			assert.equal((iframe.contentDocument || iframe.contentWindow.document).readyState, 'complete', 'frame loaded');
 			done();
