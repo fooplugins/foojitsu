@@ -20,10 +20,13 @@
 			this[0] = arg1;
 			this.length = 1;
 		} else if ($.is.array(arg1) || $.is.arrayLike(arg1)) {
-			$.each(arg1, function(i, value){
-				if ($.is.element(value)) self[i] = value;
+			var index = 0;
+			$.each(arg1, function(i, el){
+				if ($.is.element(el) && $.inArray(el, self) === -1){
+					self[index] = el; index++;
+					self.length = index;
+				}
 			});
-			this.length = arg1.length;
 		} else if ($.is.fn(arg1)){
 			$.ready(arg1);
 		}

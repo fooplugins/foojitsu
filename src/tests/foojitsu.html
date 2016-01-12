@@ -60,6 +60,17 @@
 		assert.equal($children[1], elements[1], 'element @ index 1');
 		assert.equal($children[2], elements[2], 'element @ index 2');
 		assert.equal($children[3], elements[3], 'element @ index 3');
+
+		elements = FooJitsu.map(elements, function(el){
+			return [el, el];
+		});
+		assert.equal(elements.length, 8, 'mapped element length');
+		$children = FooJitsu(elements);
+		assert.equal($children.length, 4, 'element length');
+		assert.equal($children[0], elements[0], 'element @ index 0');
+		assert.equal($children[1], elements[2], 'element @ index 1');
+		assert.equal($children[2], elements[4], 'element @ index 2');
+		assert.equal($children[3], elements[6], 'element @ index 3');
 	});
 	QUnit.test('initialize using a function', function(assert){
 		assert.expect(5);
