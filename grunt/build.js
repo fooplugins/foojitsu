@@ -20,7 +20,6 @@ module.exports = function(grunt){
 				uglify: {
 					build: {
 						options: {
-							preserveComments: 'some',
 							mangle: {
 								except: [ 'undefined' ]
 							}
@@ -38,7 +37,7 @@ module.exports = function(grunt){
 				cssmin: {
 					build: {
 						options: {
-							keepSpecialComments: 1
+							keepSpecialComments: 0
 						},
 						files: cssmin
 					}
