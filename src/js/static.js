@@ -36,6 +36,16 @@
 	};
 
 	/**
+	 * Gets the width of the current viewport.
+	 * @param {boolean} [density=false] - If true the screens pixel density is factored into the result.
+	 * @returns {number}
+	 */
+	$.viewportWidth = function(density){
+		var ratio = !!density && $.is.number(window['devicePixelRatio']) ? window['devicePixelRatio'] : 1;
+		return Math.max(document.documentElement.clientWidth, window.innerWidth, 0) / ratio;
+	};
+
+	/**
 	 * @callback eachCallback
 	 * @param {(number|string)} indexOrKey - The index or property key of the current item.
 	 * @param {*} value - The current item's value.
