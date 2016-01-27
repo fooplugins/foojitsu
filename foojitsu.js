@@ -1,6 +1,6 @@
 /*!
 * FooJitsu - A lightweight JavaScript framework for plugins.
-* @version 1.0.3
+* @version 1.0.4
 * @link https://github.com/fooplugins/foojitsu
 * @copyright FooPlugins 2016
 * @license Released under the MIT license.
@@ -27,16 +27,19 @@
 			this[0] = arg1;
 			this.length = 1;
 		} else if ($.is.array(arg1) || $.is.arrayLike(arg1)) {
-			$.each(arg1, function(i, value){
-				if ($.is.element(value)) self[i] = value;
+			var index = 0;
+			$.each(arg1, function(i, el){
+				if ($.is.element(el) && $.inArray(el, self) === -1){
+					self[index] = el; index++;
+					self.length = index;
+				}
 			});
-			this.length = arg1.length;
 		} else if ($.is.fn(arg1)){
 			$.ready(arg1);
 		}
 	}
 
-	$.version = '1.0.3';
+	$.version = '1.0.4';
 
 	var ver = /[\d\.]/;
 	/**
@@ -79,7 +82,7 @@
 
 })();
 (function($){
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * Checks if the element matches the supplied selector.
@@ -272,7 +275,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	var prefixes = ['Webkit', 'Moz', 'ms', 'O', 'Khtml'],
 		check = ['transition','transform','transformOrigin','userSelect'],
@@ -371,7 +374,7 @@
 
 })(FooJitsu);
 (function ($) {
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * Empty function
@@ -405,6 +408,16 @@
 			}
 		}
 		return document;
+	};
+
+	/**
+	 * Gets the width of the current viewport.
+	 * @param {boolean} [density=false] - If true the screens pixel density is factored into the result.
+	 * @returns {number}
+	 */
+	$.viewportWidth = function(density){
+		var ratio = !!density && $.is.number(window['devicePixelRatio']) ? window['devicePixelRatio'] : 1;
+		return Math.max(document.documentElement.clientWidth, window.innerWidth, 0) / ratio;
 	};
 
 	/**
@@ -681,7 +694,7 @@
 
 })(FooJitsu);
 (function ($) {
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * @callback beforeStartCallback
@@ -879,7 +892,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * The expando property name used by this instance of FooJitsu.
@@ -894,6 +907,7 @@
 	 */
 	$.CacheManager = function(){
 		if (!(this instanceof $.CacheManager)) return new $.CacheManager();
+		this._uid = 0;
 		/**
 		 * An object used to store cached data.
 		 * @type {object}
@@ -924,7 +938,8 @@
 		var id;
 		if ($.is.element(el) || el === window){
 			if (!$.is.number(id = el[$.expando])){
-				id = new Date().getTime();
+				this._uid++;
+				id = this._uid;
 				Object.defineProperty(el, $.expando, { value: id, configurable: true });
 			}
 			if (cacheAttributes && !this._attr[id]){
@@ -977,7 +992,7 @@
 						? this._events[id]
 						: (this._events[id] = []))
 					: this.data[id][key])
-				: this.data[id])
+				: $.filter(this.data[id], function(name){ return name.substr(0, 2) !== '__'; }))
 			: undefined;
 	};
 
@@ -1005,11 +1020,23 @@
 		if (merge) this.data[id] = $.extend(true, this.data[id], obj);
 	};
 
+	/**
+	 * Removes any cached data for the element using the specified key.
+	 * @param {HTMLElement} el - The element to remove data from.
+	 * @param {string} key - A string naming the piece of data to remove.
+	 */
+	$.CacheManager.prototype.remove = function(el, key){
+		var id;
+		if ($.is.string(key) && $.is.number(id = this.uid(el)) && $.is.defined(this.data[id]) && $.is.defined(this.data[id][key])){
+			delete this.data[id][key];
+		}
+	};
+
 	$.cache = new $.CacheManager();
 
 })(FooJitsu);
 (function ($) {
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * @callback fnEachCallback
@@ -1346,8 +1373,9 @@
 	 * Waits for content (images and iframes) to load before executing the callback function.
 	 * @param {function} callback - The function to execute once all content is loaded.
 	 * @param {*} [context] - The value used as the context, the "this" keyword, of the callback. If not supplied the FooJitsu object the function was originally called on is used.
+	 * @returns {FooJitsu}
 	 */
-	$.prototype.contentLoaded = function(callback, context){
+	$.prototype.loaded = function(callback, context){
 		var self = this, loadables = this.find('img,iframe'),
 			results = 0, expected = loadables.length, retry = 0;
 		context = $.is.defined(context) ? context : self;
@@ -1365,11 +1393,31 @@
 		function check(){
 			if (results < expected && retry <= 10){
 				retry++;
-				setTimeout(check, 200);
+				setTimeout(check, 10);
 			}
 			else callback.call(context);
 		}
 		check();
+		return this;
+	};
+
+	/**
+	 * Get the parent of each element in the current set of matched elements, optionally filtered by a selector.
+	 * @param {string} [selector] - The selector to filter the parent elements by.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.parent = function(selector){
+		var map = this.map(function(i, el){
+			if ($.is.string(selector)){
+				var parent = null, tmp = el;
+				while (parent === null && !!(tmp = tmp.parentNode)){
+					if ($.is(tmp, selector)) parent = tmp;
+				}
+				return parent;
+			}
+			return el.parentNode;
+		});
+		return $(map, this.context);
 	};
 
 	/**
@@ -1474,6 +1522,22 @@
 	};
 
 	/**
+	 * Get the combined text contents of each element in the set of matched elements, including their descendants, or set the text contents of the matched elements.
+	 * @param {*} value - The text to set as the content of each matched element. When the value is not a String, it will be converted to one.
+	 * @returns {(string|FooJitsu)}
+	 */
+	$.prototype.text = function(value){
+		if ($.is.undef(value)){
+			var el = this.get(0);
+			return $.is.element(el) ? el.textContent : null;
+		}
+		// set
+		return this.each(function(i, el){
+			el.textContent = value + '';
+		});
+	};
+
+	/**
 	 * Used to get or set a CSS property value that uses pixels.
 	 * @param {string} name - The CSS property name.
 	 * @param {(string|number)} value - A value to set for the property.
@@ -1482,7 +1546,8 @@
 	 */
 	$.prototype.__cssPixelProp__ = function(name, value){
 		if ($.is.undef(value)){
-			return parseFloat(this.css(name));
+			var result = parseFloat(this.css(name));
+			return isNaN(result) ? null : result;
 		}
 		return this.css(name, value);
 	};
@@ -1543,7 +1608,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.3') return;
+	if ($.version !== '1.0.4') return;
 
 	/**
 	 * Execute all handlers and behaviors attached to the matched elements for the given event type.
@@ -1736,6 +1801,147 @@
 			}, 1);
 		}
 		return this;
+	};
+
+})(FooJitsu);
+(function($){
+	if ($.version !== '1.0.4') return;
+
+	/**
+	 * @callback breakpointCallback
+	 * @param {HTMLElement} el - The el the breakpoint has changed for.
+	 * @param {string} name - The name of the breakpoint.
+	 * @param {number} width - The width of the breakpoint.
+	 * @param {*} [argN] - Any additional arguments that were supplied as part of the breakpoint value.
+	 * @this HTMLElement
+	 */
+	/**
+	 * Attach a callback to the element to be executed when the width of the viewport, parent or result of the
+	 * custom function matches one of the supplied breakpoint values and is different to the current breakpoint.
+	 * @param {HTMLElement} el - The element to use as the context of the callback, this is also supplied as the first argument.
+	 * @param {object} options - The options for the breakpoints. This is optional and can be excluded.
+	 * @param {breakpointCallback} callback - The function to be executed when a breakpoint changes.
+	 * @returns {FooJitsu}
+	 */
+	$.breakpoint = function(el, options, callback){
+		var args = Array.prototype.slice.call(arguments);
+		callback = args.pop();
+		if ($.is.fn(callback)){
+			var o = $.extend(true, {}, $.breakpoint.defaults, $.is.hash(options) ? options : {});
+			if (!$.is.array(o.points) || o.points.length === 0) o.points = Array.prototype.slice.call($.breakpoint.points);
+			o.width = $.is.fn(o.width) ? o.width.bind(window, el, o) : (o.viewport ? $.viewportWidth : null);
+			function onresize(){
+				var timeout;
+				if ($.is.number(timeout = $.cache.get(el, '__bpt__'))) clearTimeout(timeout);
+				$.cache.set(el, '__bpt__', setTimeout(function(){
+					var w = $.is.fn(o.width) ? o.width() : $(el).parent().width(), current = $.breakpoint.calc(o.points, w);
+					if (current[0] !== $.cache.get(el, '__bp__')){
+						$.cache.set(el, '__bp__', current[0]);
+						callback.apply(el, [el].concat(current));
+					}
+				}, o.throttle));
+			}
+			$(window).on('resize', onresize);
+			$.cache.set(el, '__bpc__', onresize);
+			onresize();
+		} else if (args.length === 1 && $.is.fn(callback = $.cache.get(el, '__bpc__'))){
+			callback.apply(el, [el].concat(current));
+		}
+	};
+
+	/**
+	 * @callback breakpointWidthCallback
+	 * @param {HTMLElement} el - The el the breakpoint has changed for.
+	 * @param {object} options - The options for the breakpoints.
+	 * @this window
+	 */
+	/**
+	 * The defaults for the breakpoint function.
+	 * @type {object}
+	 * @property {boolean} viewport - Whether to use the viewport or parent width for calculations.
+	 * @property {Array.<Array>} points - An array containing arrays of point values.
+	 * @property {number} throttle - Specifies the delay in milliseconds after the resize event has been raised to wait to see if another is triggered.
+	 * @property {breakpointWidthCallback} width - A function to retrieve a custom width used for calculations. If supplied this is the only function used to retrieve a width value.
+	 */
+	$.breakpoint.defaults = {
+		viewport: true,
+		points: [],
+		throttle: 50,
+		width: null
+	};
+
+	/**
+	 * The default point values to use if none are supplied.
+	 * @type {Array.<Array>}
+	 */
+	$.breakpoint.points = [
+		["xs", 480],
+		["sm", 768],
+		["md", 1024],
+		["lg", 1280],
+		["xl", 1600]
+	];
+
+	/**
+	 * Supplied an array of breakpoint values this returns the one matching the supplied width.
+	 * @param {Array.<Array>} points - An array of breakpoint values.
+	 * @param {number} width - The width to use when checking the breakpoints.
+	 * @returns {Array}
+	 */
+	$.breakpoint.calc = function(points, width){
+		if (!$.is.array(points) || !$.is.number(width)) return null;
+		var i = 0, len = points.length, current;
+		points.sort(function(a,b){ return a[1] - b[1]; });
+		for (; i < len; i++){
+			if (width <= points[i][1]){
+				current = points[i];
+				break;
+			}
+		}
+		if (!current) current = points[len - 1];
+		return current;
+	};
+
+	/**
+	 * Removes the breakpoint callback from the supplied element.
+	 * @param {HTMLElement} el - The element to remove the callback from.
+	 */
+	$.breakpoint.remove = function(el){
+		var timeout;
+		if ($.is.number(timeout = $.cache.get(el, '__bpt__'))){
+			clearTimeout(timeout);
+			$.cache.remove(el, '__bpt__');
+		}
+		var onresize;
+		if ($.is.fn(onresize = $.cache.get(el, '__bpc__'))){
+			$(window).off('resize', onresize);
+			$.cache.remove(el, '__bpc__');
+		}
+		$.cache.remove(el, '__bp__');
+	};
+
+	/**
+	 * Attach a callback to the matched elements to be executed when the width of the viewport, parent or result of the
+	 * custom function matches one of the supplied breakpoint values and is different to the current breakpoint.
+	 * @param {object} options - The options for the breakpoints. This is optional and can be excluded.
+	 * @param {function} callback - The function to be executed when a breakpoint is reached.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.breakpoint = function(options, callback){
+		var args = Array.prototype.slice.call(arguments);
+		return this.each(function(i, el){
+			$.breakpoint.apply(window, [el].concat(args));
+		});
+	};
+
+	/**
+	 * Removes the breakpoint callback from the matched elements.
+	 * @returns {FooJitsu}
+	 */
+	$.prototype.removeBreakpoint = function(){
+		return this.each(function(i, el){
+			$.breakpoint.remove(el);
+		});
 	};
 
 })(FooJitsu);
