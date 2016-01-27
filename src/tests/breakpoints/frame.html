@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Test</title>
+	<style>
+		#root {
+			width: 50%;
+			border: solid 1px #000;
+			padding: 5px;
+		}
+		#parent-width,#viewport-width,#custom-width {
+			border: dotted 1px #000;
+			padding: 10px;
+		}
+	</style>
+	<script src="@@file"></script>
+	<script>
+		FooJitsu(function($){
+			$('#parent-width').breakpoint({viewport: false}, function(el, name, width){
+				$(this).text('#parent-width:'+ name + ':' + width);
+			});
+			$('#viewport-width').breakpoint(function(el, name, width){
+				$(this).text('#viewport-width:'+ name + ':' + width);
+			});
+			$('#custom-width').breakpoint({
+				points:[
+					['one', 480, 'abc'],
+					['two', 768, 'def'],
+					['three', 1024, 'ghi']
+				],
+				width: function(){
+					return $('#the-custom-width').width();
+				}
+			}, function(el, name, width, value){
+				$(this).text('#custom-width:'+ name + ':' + width + ':' + value);
+			});
+		});
+	</script>
+</head>
+<body>
+<div id="root">
+	<div id="parent-width"></div>
+	<div id="viewport-width"></div>
+</div>
+<div id="custom-width"></div>
+<hr id="the-custom-width" style="width: 75%;"/>
+</body>
+</html>

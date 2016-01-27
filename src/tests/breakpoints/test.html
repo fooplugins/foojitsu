@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+	<iframe id="test-frame" src="@@frame"></iframe>
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="@@file"></script>
+<script>
+	QUnit.module('FooJitsu.breakpoints');
+	QUnit.test('check all', function(assert){
+		var done1 = assert.async(),
+			done2 = assert.async(),
+			done3 = assert.async(),
+			done4 = assert.async(),
+			done5 = assert.async(),
+			done6 = assert.async(),
+			$frame = FooJitsu('#test-frame');
+		console.error('testing');
+		$frame.on('load', function(){
+			console.error('loaded');
+			var $ = window.frames[0].FooJitsu,
+				$parent = $('#parent-width'),
+				$viewport = $('#viewport-width'),
+				$custom = $('#custom-width');
+
+			$.Deferred(function(d){
+				$frame.width(1700);
+				setTimeout(function(){
+					assert.equal($parent.text(), '#parent-width:md:1024', 'parent-width:1700');
+					assert.equal($viewport.text(), '#viewport-width:xl:1600', 'viewport-width:1700');
+					assert.equal($custom.text(), '#custom-width:three:1024:ghi', 'custom-width:1700');
+					done1();
+					d.resolve();
+				}, 80);
+			}).then(function(){
+				return $.Deferred(function(d){
+					$frame.width(1500);
+					setTimeout(function(){
+						assert.equal($parent.text(), '#parent-width:sm:768', 'parent-width:1500');
+						assert.equal($viewport.text(), '#viewport-width:xl:1600', 'viewport-width:1500');
+						assert.equal($custom.text(), '#custom-width:three:1024:ghi', 'custom-width:1500');
+						done2();
+						d.resolve();
+					}, 80);
+				}).then(function(){
+					return $.Deferred(function(d){
+						$frame.width(1200);
+						setTimeout(function(){
+							assert.equal($parent.text(), '#parent-width:sm:768', 'parent-width:1200');
+							assert.equal($viewport.text(), '#viewport-width:lg:1280', 'viewport-width:1200');
+							assert.equal($custom.text(), '#custom-width:three:1024:ghi', 'custom-width:1200');
+							done3();
+							d.resolve();
+						}, 80);
+					}).then(function(){
+						return $.Deferred(function(d){
+							$frame.width(1000);
+							setTimeout(function(){
+								assert.equal($parent.text(), '#parent-width:sm:768', 'parent-width:1000');
+								assert.equal($viewport.text(), '#viewport-width:md:1024', 'viewport-width:1000');
+								assert.equal($custom.text(), '#custom-width:two:768:def', 'custom-width:1000');
+								done4();
+								d.resolve();
+							}, 80);
+						}).then(function(){
+							return $.Deferred(function(d){
+								$frame.width(700);
+								setTimeout(function(){
+									assert.equal($parent.text(), '#parent-width:xs:480', 'parent-width:700');
+									assert.equal($viewport.text(), '#viewport-width:sm:768', 'viewport-width:700');
+									assert.equal($custom.text(), '#custom-width:two:768:def', 'custom-width:700');
+									done5();
+									d.resolve();
+								}, 80);
+							}).then(function(){
+								return $.Deferred(function(d){
+									$frame.width(400);
+									setTimeout(function(){
+										assert.equal($parent.text(), '#parent-width:xs:480', 'parent-width:400');
+										assert.equal($viewport.text(), '#viewport-width:xs:480', 'viewport-width:400');
+										assert.equal($custom.text(), '#custom-width:one:480:abc', 'custom-width:400');
+										done6();
+										d.resolve();
+									}, 80);
+								});
+							});
+						});
+					});
+				});
+			});
+		}).attr('src', $frame.attr('src'));
+	});
+</script>
+</body>
+</html>

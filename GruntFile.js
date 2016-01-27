@@ -13,7 +13,8 @@ module.exports = function (grunt) {
 				'src/js/deferred.js',
 				'src/js/cache.js',
 				'src/js/fn.js',
-				'src/js/events.js'
+				'src/js/events.js',
+				'src/js/breakpoints.js'
 			]
 		}
 	});
