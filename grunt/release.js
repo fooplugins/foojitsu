@@ -15,6 +15,11 @@ module.exports = function(grunt){
 				files: [{ expand: true, flatten: true, src: ['src/README.md'], dest: '' }]
 			}
 		},
+		copy: {
+			release: {
+				files: [{ expand: true, flatten: true, cwd: o.input, src: o.files, dest: '' }]
+			}
+		},
 		gitadd: {
 			release: {
 				options: {
@@ -56,5 +61,5 @@ module.exports = function(grunt){
 		});
 
 	grunt.registerTask('readme', ['replace:release']);
-	grunt.registerTask('release', ['version','test','readme','gitadd:release','gitcommit:release','gittag:release']);
+	grunt.registerTask('release', ['version','test','readme', 'copy:release','gitadd:release','gitcommit:release','gittag:release']);
 };
