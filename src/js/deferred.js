@@ -54,21 +54,22 @@
 			}
 			this.resolve = this.reject = this.notify = function () { throw new Error("Promise already completed"); };
 		}
-		function __exec__(reg, type){
-			if ($.is.fn(reg[type])){
-				reg[type].apply(self, args);
-			} else if ($.is.array(reg[type])){
-				$.each(reg[type], function(i, reg){
-					if ($.is.fn(reg[type])) reg[type].apply(self, args);
-				});
-			}
+		function execute(reg, type, args){
+			var callbacks = $.is.fn(reg[type]) ? [reg[type]] : ($.is.array(reg[type]) ? reg[type] : []);
+			$.each(callbacks, function(i, callback){
+				if ($.is.fn(callback)) callback.apply(self, args);
+			});
+		}
+		function safe_execute(reg, type, args){
+			try { execute(reg, type, args); }
+			catch (err) { execute(reg, 'reject', [err]); }
 		}
 		$.each(this._callbacks, function(i, reg){
-			__exec__(reg, type);
+			safe_execute(reg, type, args);
 		});
 		if (finalize){
 			$.each(this._callbacks, function(i, reg){
-				__exec__(reg, 'always');
+				safe_execute(reg, 'always', args);
 			});
 			this._callbacks = [];
 		}
