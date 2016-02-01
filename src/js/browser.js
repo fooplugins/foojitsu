@@ -6,6 +6,7 @@
 		elem = document.createElement('div'),
 		cssReg = /^-(moz|webkit|khtml|o|ms)-([a-z])/,
 		jsReg = /^(Moz|Webkit|Khtml|O|ms)([A-Z])/,
+		ua = navigator.userAgent.toLowerCase(),
 		regexReplacer = function(match, $1, $2){ return $2.toLowerCase(); },
 		cssTextReplacer = function(match, $1, $2){ return '-'+$1+'-'+$2.toLowerCase(); },
 		cleanName = function(name){
@@ -45,6 +46,7 @@
 	}
 
 	$.browser = {
+		isIE: ua.indexOf('msie ') > -1 || ua.indexOf('trident/') > -1 || ua.indexOf('edge/') > -1,
 		ltEqIE10: Function('/*@cc_on return true@*/')() // this works as only IE10 and below support the @cc_on syntax
 	};
 
