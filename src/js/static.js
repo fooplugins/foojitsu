@@ -317,4 +317,18 @@
 		return elem.childNodes;
 	};
 
+	/**
+	 * Convert a simple object into a parameter string. Keys and values are url encoded.
+	 * @param {object} obj - The object to convert.
+	 * @returns {string}
+	 */
+	$.param = function(obj){
+		var result = [];
+		$.each(obj, function(key, value){
+			result.push(encodeURI(key + '=' + value));
+		});
+		if (result.length === 0) return null;
+		return result.join('&');
+	};
+
 })(FooJitsu);
