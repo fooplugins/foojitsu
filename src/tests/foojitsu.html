@@ -73,7 +73,7 @@
 		assert.equal($children[3], elements[6], 'element @ index 3');
 	});
 	QUnit.test('initialize using a function', function(assert){
-		assert.expect(5);
+		assert.expect(6);
 		var done1 = assert.async(),
 				done2 = assert.async();
 		FooJitsu(function($){
@@ -83,9 +83,9 @@
 			done1();
 		});
 
-		FooJitsu(function(){
+		assert.throws(FooJitsu(function(){
 			throw new Error('EXPECTED');
-		});
+		}),'EXPECTED');
 
 		FooJitsu(function($){
 			assert.ok(true, 'callback executed');

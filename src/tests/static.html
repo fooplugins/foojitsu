@@ -20,7 +20,7 @@
 <script>
 	QUnit.module('FooJitsu');
 	QUnit.test('ready', function(assert){
-		assert.expect(5);
+		assert.expect(6);
 		var done1 = assert.async(),
 				done2 = assert.async();
 
@@ -31,11 +31,11 @@
 			done1();
 		});
 
-		FooJitsu(function(){
+		assert.throws(FooJitsu.ready(function(){
 			throw new Error('EXPECTED');
-		});
+		}),'EXPECTED');
 
-		FooJitsu(function($){
+		FooJitsu.ready(function($){
 			assert.ok(true, 'callback executed');
 			assert.equal($, FooJitsu, 'arg1 is FooJitsu');
 			done2();
