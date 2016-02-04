@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="@@file"></script>
+<script>
+	QUnit.module('FooJitsu.url');
+	QUnit.test('Url()', function(assert){
+		var url = new FooJitsu.Url();
+		assert.equal(url.hash, '', 'hash');
+		assert.equal(url.host, '', 'host');
+		assert.equal(url.hostname, '', 'hostname');
+		assert.equal(url.href, '', 'href');
+		assert.equal(url.pathname, '', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, '', 'protocol');
+		assert.equal(url.search, '', 'search');
+	});
+	var loc = {
+		hash: function(){ return window.location.hash; },
+		host: function(){ return window.location.host; },
+		hostname: function(){ return window.location.hostname; },
+		href: function(){ return window.location.href; },
+		pathname: function(){ return window.location.pathname; },
+		port: function(){ return window.location.port; },
+		protocol: function(){ return window.location.protocol; },
+		search: function(){ return window.location.search; }
+	};
+	QUnit.test('Url("")', function(assert){
+		var url = new FooJitsu.Url('');
+		assert.equal(url.hash, window.location.hash, 'hash');
+		assert.equal(url.host, window.location.host, 'host');
+		assert.equal(url.hostname, window.location.hostname, 'hostname');
+		assert.equal(url.pathname, window.location.pathname, 'pathname');
+		assert.equal(url.port, window.location.port, 'port');
+		assert.equal(url.protocol, window.location.protocol, 'protocol');
+		assert.equal(url.search, window.location.search, 'search');
+	});
+	QUnit.test('Url("//example")', function(assert){
+		var url = new FooJitsu.Url('//example');
+		assert.equal(url.hash, '', 'hash');
+		assert.equal(url.host, 'example', 'host');
+		assert.equal(url.hostname, 'example', 'hostname');
+		assert.equal(url.href, window.location.protocol + '//example/', 'href');
+		assert.equal(url.pathname, '/', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, window.location.protocol, 'protocol');
+		assert.equal(url.search, '', 'search');
+	});
+	QUnit.test('Url("http://example.com")', function(assert){
+		var url = new FooJitsu.Url('http://example.com');
+		assert.equal(url.hash, '', 'hash');
+		assert.equal(url.host, 'example.com', 'host');
+		assert.equal(url.hostname, 'example.com', 'hostname');
+		assert.equal(url.href, 'http://example.com/', 'href');
+		assert.equal(url.pathname, '/', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, 'http:', 'protocol');
+		assert.equal(url.search, '', 'search');
+	});
+	QUnit.test('Url("https://example.com/path/to/something")', function(assert){
+		var url = new FooJitsu.Url('https://example.com/path/to/something');
+		assert.equal(url.hash, '', 'hash');
+		assert.equal(url.host, 'example.com', 'host');
+		assert.equal(url.hostname, 'example.com', 'hostname');
+		assert.equal(url.href, 'https://example.com/path/to/something', 'href');
+		assert.equal(url.pathname, '/path/to/something', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, 'https:', 'protocol');
+		assert.equal(url.search, '', 'search');
+	});
+	QUnit.test('Url("http://example.com/?param1=one&param2=two+space")', function(assert){
+		var url = new FooJitsu.Url('http://example.com/?param1=one&param2=two+space');
+		assert.equal(url.hash, '', 'hash');
+		assert.equal(url.host, 'example.com', 'host');
+		assert.equal(url.hostname, 'example.com', 'hostname');
+		assert.equal(url.href, 'http://example.com/?param1=one&param2=two+space', 'href');
+		assert.equal(url.pathname, '/', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, 'http:', 'protocol');
+		assert.equal(url.search, '?param1=one&param2=two+space', 'search');
+	});
+	QUnit.test('Url("http://example.com/?param1=one&param2=two+space#ish")', function(assert){
+		var url = new FooJitsu.Url('http://example.com/?param1=one&param2=two+space#ish');
+		assert.equal(url.hash, '#ish', 'hash');
+		assert.equal(url.host, 'example.com', 'host');
+		assert.equal(url.hostname, 'example.com', 'hostname');
+		assert.equal(url.href, 'http://example.com/?param1=one&param2=two+space#ish', 'href');
+		assert.equal(url.pathname, '/', 'pathname');
+		assert.equal(url.port, '', 'port');
+		assert.equal(url.protocol, 'http:', 'protocol');
+		assert.equal(url.search, '?param1=one&param2=two+space', 'search');
+	});
+	QUnit.test('Url("http://example.com/?param1=one&param2=two+space&param3=three%20space&param+4=4&param%205=5#ish").param("paramN"):get', function(assert){
+		var url = new FooJitsu.Url('http://example.com/?param1=one&param2=two+space&param3=three%20space&param+4=4&param%205=5#ish');
+		assert.equal(url.param('nothing'), '', 'nothing');
+		assert.equal(url.param('param1'), 'one', 'param1');
+		assert.equal(url.param('param2'), 'two space', 'param2');
+		assert.equal(url.param('param3'), 'three space', 'param3');
+		assert.equal(url.param('param 4'), '4', 'param4');
+		assert.equal(url.param('param 5'), '5', 'param5');
+	});
+	QUnit.test('Url("http://example.com/#ish").param("paramN", value):set', function(assert){
+		var url = new FooJitsu.Url('http://example.com/#ish');
+		url.param('param1', 'one');
+		url.param('param2', 'two space');
+		url.param('param3', 'three space');
+		url.param('param4', 'four with +');
+		url.param('param 5', 'five with +');
+		assert.equal(url.search, '?param1=one&param2=two+space&param3=three+space&param4=four+with+%2B&param+5=five+with+%2B', 'search');
+		assert.equal(url.href, 'http://example.com/?param1=one&param2=two+space&param3=three+space&param4=four+with+%2B&param+5=five+with+%2B#ish', 'href');
+		url.param('param3', 'three with +');
+		assert.equal(url.search, '?param1=one&param2=two+space&param3=three+with+%2B&param4=four+with+%2B&param+5=five+with+%2B', 'search updated');
+		assert.equal(url.href, 'http://example.com/?param1=one&param2=two+space&param3=three+with+%2B&param4=four+with+%2B&param+5=five+with+%2B#ish', 'href updated');
+	});
+	QUnit.test('Url("http://example.com/?param1=one&param2=two+space&param3=three%20space&param+4=four&param%205=five#ish").param("paramN", ""):remove', function(assert){
+		var url = new FooJitsu.Url('http://example.com/?param1=one&param2=two+space&param3=three%20space&param+4=four&param%205=five#ish');
+		url.param('param1', '');
+		assert.equal(url.search, '?param2=two+space&param3=three%20space&param+4=four&param%205=five', 'param1 search');
+		assert.equal(url.href, 'http://example.com/?param2=two+space&param3=three%20space&param+4=four&param%205=five#ish', 'param1 href');
+		url.param('param 4', '');
+		assert.equal(url.search, '?param2=two+space&param3=three%20space&param%205=five', 'param4 search');
+		assert.equal(url.href, 'http://example.com/?param2=two+space&param3=three%20space&param%205=five#ish', 'param4 href');
+		url.param('param 5', '');
+		assert.equal(url.search, '?param2=two+space&param3=three%20space', 'param5 search');
+		assert.equal(url.href, 'http://example.com/?param2=two+space&param3=three%20space#ish', 'param5 href');
+	});
+</script>
+</body>
+</html>

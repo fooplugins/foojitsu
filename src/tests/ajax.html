@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>FooJitsu - QUnit tests</title>
+	<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.20.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture">
+</div>
+<script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
+<script src="@@file"></script>
+<script>
+	QUnit.module('FooJitsu.ajax');
+	QUnit.test('get:1', function(assert){
+		var done1 = assert.async();
+		FooJitsu.ajax({url: 'http://httpbin.org/get'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {}, 'expected args result');
+			done1();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done1();
+		});
+	});
+	QUnit.test('get:1:short', function(assert){
+		var done1 = assert.async();
+		FooJitsu.ajax('http://httpbin.org/get').then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {}, 'expected args result');
+			done1();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done1();
+		});
+	});
+	QUnit.test('get:2', function(assert){
+		var done2 = assert.async();
+		FooJitsu.ajax({url: 'http://httpbin.org/get?test=2&something=true'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"2","something":"true"}, 'expected args result');
+			done2();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done2();
+		});
+	});
+	QUnit.test('get:2:short', function(assert){
+		var done2 = assert.async();
+		FooJitsu.ajax('http://httpbin.org/get?test=2_short&something=true').then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"2_short","something":"true"}, 'expected args result');
+			done2();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done2();
+		});
+	});
+	QUnit.test('get:3', function(assert){
+		var done3 = assert.async();
+		FooJitsu.ajax({url: 'http://httpbin.org/get', data: 'test=3&something=true'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"3","something":"true"}, 'expected args result');
+			done3();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done3();
+		});
+	});
+	QUnit.test('get:3:short', function(assert){
+		var done3 = assert.async();
+		FooJitsu.ajax('http://httpbin.org/get', {data: 'test=3_short&something=true'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"3_short","something":"true"}, 'expected args result');
+			done3();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done3();
+		});
+	});
+	QUnit.test('get:4', function(assert){
+		var done4 = assert.async();
+		FooJitsu.ajax({url: 'http://httpbin.org/get', data: {test: 4, something: true}}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"4","something":"true"}, 'expected args result');
+			done4();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done4();
+		});
+	});
+	QUnit.test('get:4:short', function(assert){
+		var done4 = assert.async();
+		FooJitsu.ajax('http://httpbin.org/get', {data: {test: '4_short', something: true}}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test":"4_short","something":"true"}, 'expected args result');
+			done4();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done4();
+		});
+	});
+	QUnit.test('post:1', function(assert){
+		var done1 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {}, 'expected args result');
+			assert.equal(result.data, "", 'expected data result');
+			assert.deepEqual(result.form, {}, 'expected form result');
+			done1();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done1();
+		});
+	});
+	QUnit.test('post:2', function(assert){
+		var done2 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post', data: 'my value=this value'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {}, 'expected args result');
+			assert.equal(result.data, "", 'expected data result');
+			assert.deepEqual(result.form, {"my value": "this value"}, 'expected form result');
+			done2();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done2();
+		});
+	});
+	QUnit.test('post:3', function(assert){
+		var done3 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post?test=3', data: 'my value=this value'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test": "3"}, 'expected args result');
+			assert.equal(result.data, "", 'expected data result');
+			assert.deepEqual(result.form, {"my value": "this value"}, 'expected form result');
+			done3();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done3();
+		});
+	});
+	QUnit.test('post:4', function(assert){
+		var done4 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post', data: {test: 4}}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {}, 'expected args result');
+			assert.equal(result.data, "", 'expected data result');
+			assert.deepEqual(result.form, {"test": "4"}, 'expected form result');
+			done4();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done4();
+		});
+	});
+	QUnit.test('post:5', function(assert){
+		var done5 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post?test=5', data: {something: 5}}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test": "5"}, 'expected args result');
+			assert.equal(result.data, "", 'expected data result');
+			assert.deepEqual(result.form, {"something": "5"}, 'expected form result');
+			done5();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done5();
+		});
+	});
+	QUnit.test('post:6', function(assert){
+		var done6 = assert.async();
+		FooJitsu.ajax({method: 'POST', url: 'http://httpbin.org/post?test=6', contentType: 'application/json', data: {something: 6}}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result.args, {"test": "6"}, 'expected args result');
+			assert.equal(result.data, "{\"something\":6}", 'expected data result');
+			assert.deepEqual(result.form, {}, 'expected form result');
+			done6();
+		}, function(err){
+			assert.ok(false, 'should post and then retrieve a json object');
+			console.log(err);
+			done6();
+		});
+	});
+	QUnit.test('jsonp:1', function(assert){
+		var done1 = assert.async();
+		FooJitsu.ajax({url: 'http://jsfiddle.net/echo/jsonp/?test=1', dataType: 'jsonp'}).then(function(result){
+			assert.ok(FooJitsu.is.hash(result), 'json returned');
+			assert.deepEqual(result, {"test": "1"}, 'expected result');
+			done1();
+		}, function(err){
+			assert.ok(false, 'should retrieve a json object');
+			console.log(err);
+			done1();
+		});
+	});
+</script>
+</body>
+</html>
