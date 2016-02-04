@@ -1,6 +1,6 @@
 /*!
 * FooJitsu - A lightweight JavaScript framework for plugins.
-* @version 1.0.4
+* @version 1.0.5
 * @link https://github.com/fooplugins/foojitsu
 * @copyright FooPlugins 2016
 * @license Released under the MIT license.
@@ -39,7 +39,7 @@
 		}
 	}
 
-	$.version = '1.0.4';
+	$.version = '1.0.5';
 
 	var ver = /[\d\.]/;
 	/**
@@ -82,7 +82,7 @@
 
 })();
 (function($){
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * Checks if the element matches the supplied selector.
@@ -275,13 +275,14 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	var prefixes = ['Webkit', 'Moz', 'ms', 'O', 'Khtml'],
 		check = ['transition','transform','transformOrigin','userSelect'],
 		elem = document.createElement('div'),
 		cssReg = /^-(moz|webkit|khtml|o|ms)-([a-z])/,
 		jsReg = /^(Moz|Webkit|Khtml|O|ms)([A-Z])/,
+		ua = navigator.userAgent.toLowerCase(),
 		regexReplacer = function(match, $1, $2){ return $2.toLowerCase(); },
 		cssTextReplacer = function(match, $1, $2){ return '-'+$1+'-'+$2.toLowerCase(); },
 		cleanName = function(name){
@@ -321,6 +322,7 @@
 	}
 
 	$.browser = {
+		isIE: ua.indexOf('msie ') > -1 || ua.indexOf('trident/') > -1 || ua.indexOf('edge/') > -1,
 		ltEqIE10: Function('/*@cc_on return true@*/')() // this works as only IE10 and below support the @cc_on syntax
 	};
 
@@ -374,7 +376,7 @@
 
 })(FooJitsu);
 (function ($) {
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * Empty function
@@ -629,7 +631,7 @@
 	 * @param {(string|boolean|number)} val - The attribute's string value.
 	 * @returns {(string|boolean|number|object)}
 	 */
-	$.parseAttrValue = function(val){
+	$.parseValue = function(val){
 		var result = val;
 		if (/^false$/i.test(val)) result = false;
 		else if (/^true$/i.test(val)) result = true;
@@ -692,43 +694,132 @@
 		return elem.childNodes;
 	};
 
-})(FooJitsu);
-(function ($) {
-	if ($.version !== '1.0.4') return;
-
 	/**
-	 * @callback beforeStartCallback
-	 * @param {Deferred} deferred - The current deferred object.
+	 * Convert between an object and a parameter string using PHP array notation. Spaces are converted to plus "+" characters.
+	 * @param {(string|object|Array)} obj - The object to convert. If a string is passed in the parameters are converted into an object.
+	 * @param {string} [prefix] - The prefix to apply to the name.
+	 * @returns {(string|object)}
 	 */
-	/**
-	 * A factory function that returns a chainable utility object with methods to register multiple callbacks into callback queues, invoke callback queues,
-	 * and relay the success or failure state of any synchronous or asynchronous function.
-	 * @param {beforeStartCallback} beforeStart - A function that is called just before the constructor returns.
-	 * @returns {Deferred}
-	 */
-	$.Deferred = function(beforeStart){
-		var deferred = new Deferred();
-		if ($.is.fn(beforeStart)){
-			try {
-				beforeStart(deferred);
-			} catch (err) {
-				deferred.reject(err);
-			}
+	$.param = function(obj, prefix) {
+		if ($.is.string(obj)){
+			return $.param.parse(obj, prefix);
 		}
-		return deferred;
+		return $.param.stringify(obj, prefix);
 	};
 
 	/**
+	 * Convert an object into a parameter string using PHP notation. Spaces are converted to plus "+" characters.
+	 * @param {object} obj - The object to convert.
+	 * @param {string} [prefix] - The prefix to apply to parameter names.
+	 * @returns {string}
+	 */
+	$.param.stringify = function(obj, prefix){
+		var str = [], arr = $.is.arrayLike(obj);
+		prefix = $.is.string(prefix) ? prefix : '';
+		$.each(obj, function(name, value){
+			name = arr ? prefix + '[]' : (prefix !== '' ? prefix + '[' + name + ']' : name);
+			str.push(typeof value === 'object' ? $.param(value, name) : $.param.encode(name) + "=" + $.param.encode(value));
+		});
+		return str.join("&");
+	};
+
+	/**
+	 * Convert a PHP notation parameter string to an object or array. "%20" and "+" characters are converted to spaces.
+	 * @param {string} str - The parameter string to convert, this can be a full url.
+	 * @param {string} [prefix] - The prefix to use when generating properties.
+	 * @returns {(Array|object)}
+	 */
+	$.param.parse = function(str, prefix){
+		str = str.split('#')[0];
+		str = '?' + (str.indexOf('?') !== -1 ? str.split('?')[1] : str);
+		var result = {};
+		$.each(str.substr(1).split('&'), function(i, param){
+			var parts = param.split('=');
+			if (parts.length !== 2) return;
+			var name = $.param.decode(parts[0]),
+				value = $.param.decode(parts[1]),
+				regex = /\[(.+?)?]/g;
+
+			if (regex.test(name)){
+				regex.lastIndex = 0;
+				var arr = /\[]/.test(name), current = result, path = [], match, last;
+				while ((match = regex.exec(name)) !== null) {
+					if ($.is.string(match[1])) path.push(match[1]);
+				}
+				var prefixed = $.is.string(prefix);
+				name = name.replace(regex, '');
+				if (!prefixed) path.unshift(name);
+				if (prefixed) path.unshift(prefix);
+				last = path.length - 1;
+				$.each(path, function(i, n){
+					if (i === last){
+						if (arr){
+							if (n === '' && !prefixed){
+								n = 'array';
+								current.ARRAY_RESULT = true;
+							}
+							if ($.is.array(current[n])) current[n].push(value);
+							else current[n] = [value];
+						} else {
+							current[n] = value;
+						}
+					} else {
+						if ($.is.undef(current[n])) current[n] = {};
+						current = current[n];
+					}
+				});
+			} else {
+				result[name] = value;
+			}
+		});
+		return result.ARRAY_RESULT ? result.array : result;
+	};
+
+	/**
+	 * URL parameter encodes the supplied string. Spaces are converted to plus "+" characters.
+	 * @param {string} str - The string to encode.
+	 * @returns {string}
+	 */
+	$.param.encode = function(str){
+		return encodeURIComponent(str).replace(/%20/g, '+');
+	};
+
+	/**
+	 * URL parameter decodes the supplied string. Pluses are converted to space " " characters.
+	 * @param {string} str - The string to decode.
+	 * @returns {string}
+	 */
+	$.param.decode = function(str){
+		return $.is.string(str) ? decodeURIComponent(str.replace(/\+/g, '%20')) : str + '';
+	};
+
+})(FooJitsu);
+(function ($) {
+	if ($.version !== '1.0.5') return;
+
+	/**
+	 * @callback beforeStartCallback
+	 * @param {FooJitsu.Deferred} deferred - The current deferred object.
+	 */
+	/**
 	 * A chainable utility object with methods to register multiple callbacks into callback queues, invoke callback queues,
 	 * and relay the success or failure state of any synchronous or asynchronous function.
-	 * @returns {Deferred}
+	 * @param {beforeStartCallback} beforeStart - A function that is called just before the constructor returns.
+	 * @returns {FooJitsu.Deferred}
 	 * @constructor
 	 */
-	function Deferred(){
-		if (!(this instanceof Deferred)) return new Deferred();
-		this._callbacks = [];
-		this._state = 'pending';
-	}
+	$.Deferred = function(beforeStart){
+		if (!(this instanceof $.Deferred)) return new $.Deferred(beforeStart);
+		this.__callbacks__ = [];
+		this.currentState = 'pending';
+		if ($.is.fn(beforeStart)){
+			try {
+				beforeStart(this);
+			} catch (err) {
+				this.reject(err);
+			}
+		}
+	};
 
 	/**
 	 * Used internally by the object to set it's state and execute callbacks.
@@ -736,68 +827,69 @@
 	 * @param {Array} args - The arguments to execute any callbacks with.
 	 * @private
 	 */
-	Deferred.prototype.__apply__ = function(type, args){
+	$.Deferred.prototype.__apply__ = function(type, args){
 		var self = this, finalize = type === 'resolve' || type === 'reject';
 		if (finalize){
 			if (type === 'reject'){
-				this._state = 'rejected';
+				this.currentState = 'rejected';
 				this.then = function (resolve, reject) { reject.apply(self, args); };
 			}
 			if (type === 'resolve'){
-				this._state = 'resolved';
+				this.currentState = 'resolved';
 				this.then = function (resolve) { resolve.apply(self, args); };
 			}
-			this.resolve = this.reject = this.notify = function () { throw new Error("Promise already completed"); };
 		}
-		function __exec__(reg, type){
-			if ($.is.fn(reg[type])){
-				reg[type].apply(self, args);
-			} else if ($.is.array(reg[type])){
-				$.each(reg[type], function(i, reg){
-					if ($.is.fn(reg[type])) reg[type].apply(self, args);
-				});
-			}
+		function execute(reg, type, args){
+			var callbacks = $.is.fn(reg[type]) ? [reg[type]] : ($.is.array(reg[type]) ? reg[type] : []);
+			$.each(callbacks, function(i, callback){
+				if ($.is.fn(callback)) callback.apply(self, args);
+			});
 		}
-		$.each(this._callbacks, function(i, reg){
-			__exec__(reg, type);
+		function safe_execute(reg, type, args){
+			try { execute(reg, type, args); }
+			catch (err) { execute(reg, 'reject', [err]); }
+		}
+		$.each(this.__callbacks__, function(i, reg){
+			safe_execute(reg, type, args);
 		});
 		if (finalize){
-			$.each(this._callbacks, function(i, reg){
-				__exec__(reg, 'always');
+			$.each(this.__callbacks__, function(i, reg){
+				safe_execute(reg, 'always', args);
 			});
-			this._callbacks = [];
+			this.__callbacks__ = [];
+			this.resolve = this.reject = this.notify = $.noop;
 		}
 	};
 
 	/**
-	 * Determine the current state of a Deferred object, can be one of the following; "pending", "resolved" or "rejected"
+	 * Determine the current state of a deferred object, can be one of the following; "pending", "resolved" or "rejected"
 	 * @returns {string}
 	 */
-	Deferred.prototype.state = function(){
-		return this._state;
+	$.Deferred.prototype.state = function(){
+		return this.currentState;
 	};
 
 	/**
-	 * Resolve a Deferred object and call any doneCallbacks with the given args.
+	 * Resolve a deferred object and call any doneCallbacks with the given args.
 	 * @param {...*} args - Any number of arguments to supply to the doneCallbacks.
 	 */
-	Deferred.prototype.resolve = function(args){
+	$.Deferred.prototype.resolve = function(args){
 		this.__apply__('resolve', Array.prototype.slice.call(arguments));
 	};
 
 	/**
-	 * Reject a Deferred object and call any failCallbacks with the given args.
+	 * Reject a deferred object and call any failCallbacks with the given args.
 	 * @param {...*} args - Any number of arguments to supply to the failCallbacks.
 	 */
-	Deferred.prototype.reject = function(args){
+	$.Deferred.prototype.reject = function(args){
 		this.__apply__('reject', Array.prototype.slice.call(arguments));
 	};
 
 	/**
-	 * Call the progressCallbacks on a Deferred object with the given args.
+	 * Call the progressCallbacks on a deferred object with the given args.
 	 * @param {...*} args - Any number of arguments to supply to the progressCallbacks.
 	 */
-	Deferred.prototype.notify = function(args){
+	$.Deferred.prototype.notify = function(args){
 		this.__apply__('progress', Array.prototype.slice.call(arguments));
 	};
 
@@ -818,65 +910,65 @@
 	 * @param {...*} [args] - Any number of arguments to supply to the progressCallbacks.
 	 */
 	/**
-	 * Add handlers to be called when the Deferred object is resolved, rejected, or still in progress.
-	 * @param {(doneCallback|Array.<doneCallback>)} doneCallbacks - A function, or array of functions, called when the Deferred is resolved.
-	 * @param {(failCallback|Array.<failCallback>)} failCallbacks - A function, or array of functions, called when the Deferred is rejected.
-	 * @param {(progressCallback|Array.<progressCallback>)} progressCallbacks - A function, or array of functions, called when the Deferred notifies progress.
-	 * @returns {Deferred}
+	 * Add handlers to be called when the deferred object is resolved, rejected, or still in progress.
+	 * @param {(doneCallback|Array.<doneCallback>)} doneCallbacks - A function, or array of functions, called when the deferred is resolved.
+	 * @param {(failCallback|Array.<failCallback>)} failCallbacks - A function, or array of functions, called when the deferred is rejected.
+	 * @param {(progressCallback|Array.<progressCallback>)} progressCallbacks - A function, or array of functions, called when the deferred notifies progress.
+	 * @returns {FooJitsu.Deferred}
 	 */
-	Deferred.prototype.then = function(doneCallbacks, failCallbacks, progressCallbacks){
-		this._callbacks.push({resolve: doneCallbacks, reject: failCallbacks, progress: progressCallbacks});
+	$.Deferred.prototype.then = function(doneCallbacks, failCallbacks, progressCallbacks){
+		this.__callbacks__.push({resolve: doneCallbacks, reject: failCallbacks, progress: progressCallbacks});
 		return this;
 	};
 
 	/**
-	 * Add handlers to be called when the Deferred object is either resolved or rejected.
-	 * @param {(alwaysCallback|Array.<alwaysCallback>)} alwaysCallbacks - A function, or array of functions, that is called when the Deferred is resolved or rejected.
-	 * @returns {Deferred}
+	 * Add handlers to be called when the deferred object is either resolved or rejected.
+	 * @param {(alwaysCallback|Array.<alwaysCallback>)} alwaysCallbacks - A function, or array of functions, that is called when the deferred is resolved or rejected.
+	 * @returns {FooJitsu.Deferred}
 	 */
-	Deferred.prototype.always = function(alwaysCallbacks){
-		this._callbacks.push({always: alwaysCallbacks});
+	$.Deferred.prototype.always = function(alwaysCallbacks){
+		this.__callbacks__.push({always: alwaysCallbacks});
 		return this;
 	};
 
 	/**
-	 * Add handlers to be called when the Deferred object is resolved.
-	 * @param {(doneCallback|Array.<doneCallback>)} doneCallbacks - A function, or array of functions, called when the Deferred is resolved.
-	 * @returns {Deferred}
+	 * Add handlers to be called when the deferred object is resolved.
+	 * @param {(doneCallback|Array.<doneCallback>)} doneCallbacks - A function, or array of functions, called when the deferred is resolved.
+	 * @returns {FooJitsu.Deferred}
 	 */
-	Deferred.prototype.done = function(doneCallbacks){
-		this._callbacks.push({resolve: doneCallbacks});
+	$.Deferred.prototype.done = function(doneCallbacks){
+		this.__callbacks__.push({resolve: doneCallbacks});
 		return this;
 	};
 
 	/**
-	 * Add handlers to be called when the Deferred object is rejected.
-	 * @param {(failCallback|Array.<failCallback>)} failCallbacks - A function, or array of functions, called when the Deferred is rejected.
-	 * @returns {Deferred}
+	 * Add handlers to be called when the deferred object is rejected.
+	 * @param {(failCallback|Array.<failCallback>)} failCallbacks - A function, or array of functions, called when the deferred is rejected.
+	 * @returns {FooJitsu.Deferred}
 	 */
-	Deferred.prototype.fail = function(failCallbacks){
-		this._callbacks.push({reject: failCallbacks});
+	$.Deferred.prototype.fail = function(failCallbacks){
+		this.__callbacks__.push({reject: failCallbacks});
 		return this;
 	};
 
 	/**
-	 * Add handlers to be called when the Deferred object generates progress notifications.
-	 * @param {(progressCallback|Array.<progressCallback>)} progressCallbacks - A function, or array of functions, to be called when the Deferred generates progress notifications.
-	 * @returns {Deferred}
+	 * Add handlers to be called when the deferred object generates progress notifications.
+	 * @param {(progressCallback|Array.<progressCallback>)} progressCallbacks - A function, or array of functions, to be called when the deferred generates progress notifications.
+	 * @returns {FooJitsu.Deferred}
 	 */
-	Deferred.prototype.progress = function(progressCallbacks){
-		this._callbacks.push({progress: progressCallbacks});
+	$.Deferred.prototype.progress = function(progressCallbacks){
+		this.__callbacks__.push({progress: progressCallbacks});
 		return this;
 	};
 
 	/**
-	 * Provides a way to execute callback functions based on one or more Deferred objects that represent asynchronous events.
-	 * @param {...Deferred} deferreds - One or more Deferred objects.
-	 * @returns {Deferred|FooJitsu.Deferred}
+	 * Provides a way to execute callback functions based on one or more deferred objects that represent asynchronous events.
+	 * @param {...FooJitsu.Deferred} deferreds - One or more deferred objects.
+	 * @returns {FooJitsu.Deferred}
 	 */
 	$.when = function(deferreds){
 		var args = Array.prototype.slice.call(arguments);
-		return $.Deferred(function(d){
+		return new $.Deferred(function(d){
 			var expected = args.length, results = {length: 0};
 			$.each(args, function(i, deferred){
 				deferred.then(function(result){
@@ -892,7 +984,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * The expando property name used by this instance of FooJitsu.
@@ -946,7 +1038,7 @@
 				var attributes = {};
 				$.each(el.attributes, function(i, attr){
 					if (attr.name.substr(0, 5) === 'data-'){
-						attributes[$.toCamelCase(attr.name.substr(5))] = $.parseAttrValue(attr.value);
+						attributes[$.toCamelCase(attr.name.substr(5))] = $.parseValue(attr.value);
 					}
 				});
 				this.data[id] = $.extend(true, this.data[id], attributes);
@@ -1036,7 +1128,7 @@
 
 })(FooJitsu);
 (function ($) {
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * @callback fnEachCallback
@@ -1318,11 +1410,11 @@
 			var el = this.get(0);
 			if (!$.is.element(el) || !el.hasAttributes()) return;
 			if ($.is.string(nameOrAttr)){
-				return $.parseAttrValue(el.getAttribute($.toHyphen(nameOrAttr)));
+				return $.parseValue(el.getAttribute($.toHyphen(nameOrAttr)));
 			} else {
 				var result = {};
 				$.each(el.attributes, function(i, attr){
-					result[$.toCamelCase(attr.name)] = $.parseAttrValue(attr.value);
+					result[$.toCamelCase(attr.name)] = $.parseValue(attr.value);
 				});
 				return result;
 			}
@@ -1608,7 +1700,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * Execute all handlers and behaviors attached to the matched elements for the given event type.
@@ -1805,7 +1897,7 @@
 
 })(FooJitsu);
 (function($){
-	if ($.version !== '1.0.4') return;
+	if ($.version !== '1.0.5') return;
 
 	/**
 	 * @callback breakpointCallback
@@ -1943,5 +2035,322 @@
 			$.breakpoint.remove(el);
 		});
 	};
+
+})(FooJitsu);
+(function($){
+
+	var a = document.createElement('a'),
+		props = ['protocol','hostname','host','pathname','port','search','hash'];
+
+	/**
+	 * Create an object populated with the various components of the supplied url.
+	 * @param {string} url - The url to parse.
+	 * @returns {FooJitsu.Url}
+	 * @constructor
+	 */
+	$.Url = function(url){
+		if (!(this instanceof $.Url)) return new $.Url(url);
+		this.hash = '';
+		this.host = '';
+		this.hostname = '';
+		this.pathname = '';
+		this.port = '';
+		this.protocol = '';
+		this.search = '';
+		var self = this;
+		Object.defineProperty(self, 'href', {
+			get: function(){ return self.toString(); },
+			set: function(value){ self.parse(value); }
+		});
+		self.href = url;
+	};
+
+	/**
+	 * Parses the supplied url into it's various components.
+	 * @param {string} url - The url to parse.
+	 */
+	$.Url.prototype.parse = function(url){
+		if (!$.is.string(url)) return '';
+		a.href = url === '' ? window.location.href : url;
+		if (a.host == '') a.href = a.href;
+		var self = this;
+		$.each(props, function(i, prop){ self[prop] = a[prop]; });
+		if (this.pathname.indexOf('/') !== 0) this.pathname = '/' + this.pathname;
+	};
+
+	/**
+	 * Gets or sets a query string parameter value.
+	 * @param {string} key - The key of the parameter to get or set.
+	 * @param {*} [value] - The value to set, this will be converted to a string.
+	 * @returns {(string|FooJitsu.Url)}
+	 */
+	$.Url.prototype.param = function(key, value){
+		var self = this,
+			regex = new RegExp('(\\?|&)'+$.param.encode(key).replace(/\+/g, '(?:%20|\\+)')+'(?:%5B%5D)?=(.+?)($|&)', 'g'),
+			matches = [],
+			match;
+
+		while ((match = regex.exec(this.search)) !== null) {
+			matches.push(match);
+			if ($.is.string(match[3])) regex.lastIndex -= match[3].length;
+		}
+
+		if ($.is.undef(value)){
+			value = $.map(matches, function(m){ return $.param.decode(m[2]); });
+			return value.length === 0 ? '' : $.parseValue(value.length === 1 ? value[0] : JSON.stringify(value));
+		} else if (matches.length > 0 && value !== ''){
+			$.each(matches, function(i, m){
+				self.search = self.search.replace(m[0], m[1] + $.param.encode(key) + '=' + $.param.encode(value) + ($.is.string(m[3]) ? m[3] : ''));
+			});
+		} else if (matches.length > 0 && value === ''){
+			$.each(matches, function(i, m){
+				self.search = self.search.replace(m[0], m[1]);
+			});
+			this.search = this.search.replace(/(^\?$|&$)/, '');
+		} else if ($.is.defined(value)) {
+			this.search += (this.search.indexOf('?') === -1 ? '?' : '&') + $.param.encode(key) + '=' + $.param.encode(value);
+		}
+		return this;
+	};
+
+	/**
+	 * Gets or sets multiple query string parameter values.
+	 * @param {(string|object)} [params] - A url encoded string or a simple hash of key/value pairs to add.
+	 * @returns {(object|FooJitsu.Url)}
+	 */
+	$.Url.prototype.params = function(params){
+		if ($.is.undef(params)){
+			return $.param(this.search);
+		}
+		if ($.is.string(params) && params.indexOf('=') !== -1) params = $.param(params);
+		if ($.is.hash(params)){
+			var self = this;
+			$.each(params, function(key, value){
+				self.param(key, value);
+			});
+		}
+		return this;
+	};
+
+	/**
+	 * Overrides the default toString method and replaces it with a custom one the builds the url from it's parts ensuring
+	 * any changes to the properties are reflected.
+	 * @returns {string}
+	 */
+	$.Url.prototype.toString = function(){
+		return this.host !== '' ? this.protocol + '//' + this.host + this.pathname + this.search + this.hash : '';
+	};
+
+})(FooJitsu);
+(function($){
+	if ($.version !== '1.0.5') return;
+
+	/**
+	 * Perform an asynchronous HTTP (Ajax) request.
+	 * @param {(string|AjaxOptions)} url - A string containing the URL to which the request is sent or the options object.
+	 * @param {AjaxOptions} options - A set of key/value pairs that configure the Ajax request. All settings are optional. A default can be set for any option with $.ajax.config().
+	 * @returns {FooJitsu.Deferred}
+	 */
+	$.ajax = function(url, options){
+		if ($.is.hash(url)) options = url;
+		if ($.is.string(url)){
+			options = $.is.hash(options) ? options : {};
+			options.url = url;
+		}
+		var o = $.extend(true, {}, $.ajax.defaults, options);
+		o.url = $.is.string(o.url) ? new $.Url(o.url) : o.url;
+		o.method = o.method.toLowerCase();
+		o.dataType = $.is.string(o.dataType) ? o.dataType.toLowerCase() : o.dataType;
+		if (o.dataType === 'jsonp') return $.ajax.jsonp(o);
+		return new $.Deferred(function(d){
+			var xhr = new XMLHttpRequest();
+			xhr.addEventListener('load', function(){
+				try {
+					if (xhr.status === 200) {
+						var response = $.ajax.response(xhr, o);
+						d.resolve(response);
+					} else {
+						d.reject(Error(xhr.statusText), xhr);
+					}
+				} catch (err) {
+					d.reject(err, xhr);
+				}
+			});
+			$.ajax.send(xhr, o);
+		});
+	};
+
+	/**
+	 * The default options for the ajax feature.
+	 * @typedef {object} AjaxOptions
+	 * @property {(boolean|string)} cache - If set to false, "_={timestamp}" is appended to the end of GET request urls.
+	 * 	If a string is supplied it is used in place of the underscore.
+	 * @property {?string} contentType - When sending data to the server, use this content type. Default is
+	 * 	"application/x-www-form-urlencoded", which is fine for most cases.
+	 * @property {(?string|object)} data - Data to be sent to the server. It is converted to a query string, if not
+	 * 	already a string. It's appended to the url for GET-requests. Object must be Key/Value pairs.
+	 * @property {?string} dataType - The type of data that you're expecting back from the server. If none is specified,
+	 * 	FooJitsu will try to infer it based on the MIME type of the response.
+	 * @property {object} headers - An object of additional header key/value pairs to send along with requests using the
+	 * 	XMLHttpRequest transport.
+	 * @property {string} jsonp - Override the callback function name in a JSONP request. This value will be used instead
+	 * 	of "callback" in the "callback={function-name}" part of the query string in the url.
+	 * @property {boolean} processData - By default, data passed in to the data option as an object will be processed and
+	 * 	transformed into a query string, if a string value is passed in it will be url encoded. If you want to send a
+	 * 	DOMDocument, or other non-processed data, set this option to false.
+	 * @property {string} method - The HTTP method to use for the request ("POST", "GET", "PUT", etc.).
+	 * @property {(FooJitsu.Url|?string)} url - The url to send the request to.
+	 */
+	$.ajax.defaults = {
+		cache: true,
+		contentType: null,
+		data: null,
+		dataType: null,
+		headers: {},
+		jsonp: 'callback',
+		processData: true,
+		method: 'GET',
+		url: null
+	};
+
+	/**
+	 * Set default values for future Ajax requests.
+	 * @param {object} options - The default options to configure.
+	 */
+	$.ajax.config = function(options){
+		$.extend(true, $.ajax.defaults, options);
+	};
+
+	/**
+	 * Configures the XMLHttpRequest's headers using the supplied options.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to set the headers for.
+	 * @param {AjaxOptions} options - The options to retrieve the header information from.
+	 */
+	$.ajax.setHeaders = function(xhr, options){
+		$.each(options.headers, function(name, value){
+			if (name.toLowerCase() === 'content-type'){
+				options.contentType = value;
+			} else {
+				xhr.setRequestHeader(name, value);
+			}
+		});
+		if (!$.is.string(options.contentType)
+			&& $.inArray(options.method, ['post','patch']) !== -1
+			&& !($.is.fn(window.FormData) && options.data instanceof window.FormData)){
+			options.contentType = 'application/x-www-form-urlencoded';
+		}
+		if ($.is.string(options.contentType)) xhr.setRequestHeader('Content-Type', options.contentType);
+	};
+
+	/**
+	 * Opens the XMLHttpRequest using the supplied url object and options.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to open.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 */
+	$.ajax.open = function(xhr, options){
+		if (!options.cache) options.url.param($.is.boolean(options.cache) ? '_' : options.cache, Date.now());
+		xhr.open(options.method, options.url.toString(), true);
+		$.ajax.setHeaders(xhr, options);
+	};
+
+	/**
+	 * Send the XMLHttpRequest to the server.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to send.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 */
+	$.ajax.send = function (xhr, options) {
+		switch (options.method) {
+			case 'post':
+				$.ajax.send.post(xhr, options);
+				break;
+			default:
+				$.ajax.send.get(xhr, options);
+				break;
+		}
+	};
+
+	/**
+	 * Send the XMLHttpRequest using the GET method.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to send.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 */
+	$.ajax.send.get = function(xhr, options){
+		options.url.params(options.data);
+		$.ajax.open(xhr, options);
+		xhr.send(null);
+	};
+
+	/**
+	 * Send the XMLHttpRequest using the POST method.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to send.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 */
+	$.ajax.send.post = function(xhr, options){
+		$.ajax.open(xhr, options);
+		xhr.send($.ajax.send.post.data(options));
+	};
+
+	/**
+	 * Processes the data option and returns the result.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 * @returns {*}
+	 */
+	$.ajax.send.post.data = function(options){
+		var data = options.data;
+		if (options.processData && $.is.hash(options.data)){
+			data = options.contentType === 'application/json' ? JSON.stringify(options.data) : $.param(options.data);
+		}
+		return data;
+	};
+
+	/**
+	 * Parses the response of the XMLHttpRequest and returns the appropriate value.
+	 * @param {XMLHttpRequest} xhr - The XMLHttpRequest to parse.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 * @returns {*}
+	 */
+	$.ajax.response = function(xhr, options){
+		switch (options.dataType || xhr.getResponseHeader('Content-Type')){
+			case 'application/json':
+			case 'json':
+				return JSON.parse(xhr.responseText);
+			case 'application/xml':
+			case 'xml':
+				return xhr.responseXML;
+			default:
+				return xhr.response;
+		}
+	};
+
+	/**
+	 * Perform an asynchronous JSONP request.
+	 * @param {AjaxOptions} options - The options supplied to the .ajax() method.
+	 * @returns {FooJitsu.Deferred}
+	 */
+	$.ajax.jsonp = function(options){
+		return new $.Deferred(function(d){
+			try {
+				var script = document.createElement('script'),
+					uid = '_' + Math.random().toString(36).substr(2, 9);
+				$.ajax.jsonp.callbacks[uid] = function(result){
+					delete $.ajax.jsonp.callbacks[uid];
+					script.parentNode.removeChild(script);
+					d.resolve(result);
+				};
+				options.url.param(options.data);
+				options.url.param(options.jsonp, 'FooJitsu.ajax.jsonp.callbacks.'+uid);
+				script.src = options.url.toString();
+				document.body.appendChild(script);
+			} catch (err) {
+				d.reject(err);
+			}
+		});
+	};
+
+	/**
+	 * An object used to store JSONP callback functions.
+	 * @type {object}
+	 */
+	$.ajax.jsonp.callbacks = {};
 
 })(FooJitsu);

@@ -1,7 +1,7 @@
 #FooJitsu v@@version
 
 This library was created as we started to drop support for IE8 and write our plugins using plain JavaScript. It is modeled after jQuery's public API, 
-and although it does not support the massive amount of utility methods that jQuery does, it is only 22kb minified (3.7kb gzipped) at the moment while jQuery 2.0.0 
+and although it does not support the massive amount of utility methods that jQuery does, it is only 28kb minified at the moment while jQuery 2.0.0 
 (no IE8 jQuery) is up at 84kb.
 
 ##Usage

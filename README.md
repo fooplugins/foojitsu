@@ -1,7 +1,7 @@
-#FooJitsu v1.0.4
+#FooJitsu v1.0.5
 
 This library was created as we started to drop support for IE8 and write our plugins using plain JavaScript. It is modeled after jQuery's public API, 
-and although it does not support the massive amount of utility methods that jQuery does, it is only 22kb minified (3.7kb gzipped) at the moment while jQuery 2.0.0 
+and although it does not support the massive amount of utility methods that jQuery does, it is only 28kb minified at the moment while jQuery 2.0.0 
 (no IE8 jQuery) is up at 84kb.
 
 ##Usage
@@ -10,7 +10,7 @@ At the moment we are making use of the awesome free service [rawgit.com](https:/
 please use the following:
 
 ```html
-<script src="//cdn.rawgit.com/fooplugins/foojitsu/1.0.4/foojitsu.min.js"></script>
+<script src="//cdn.rawgit.com/fooplugins/foojitsu/1.0.5/foojitsu.min.js"></script>
 ```
 
 Or grab the compiled files from the repo's root directory and include them in your project. Once included you can use FooJitsu basically like you would jQuery:
