@@ -12,13 +12,19 @@ module.exports = function(grunt){
 		replace: {
 			test: {
 				options: {
-					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../<%= pkg.name %>.js' }])
+					patterns: o.replace.slice().concat([
+						{ match: 'file', replacement: '../<%= pkg.name %>.js' },
+						{ match: 'breakpoint_frame', replacement: 'breakpoints/frame.html' }
+					])
 				},
 				files: [{ expand: true, flatten: true, src: [o.input+'*.html'], dest: o.output }]
 			},
 			test_min: {
 				options: {
-					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../<%= pkg.name %>.min.js' }])
+					patterns: o.replace.slice().concat([
+						{ match: 'file', replacement: '../<%= pkg.name %>.min.js' },
+						{ match: 'breakpoint_frame', replacement: 'breakpoints/frame.min.html' }
+					])
 				},
 				files: [{
 					expand: true, flatten: true, src: [o.input+'*.html'], dest: o.output,
@@ -29,10 +35,7 @@ module.exports = function(grunt){
 			},
 			breakpoints: {
 				options: {
-					patterns: o.replace.slice().concat([
-						{ match: 'file', replacement: '../../<%= pkg.name %>.js' },
-						{ match: 'frame', replacement: 'frame.html' }
-					])
+					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../../<%= pkg.name %>.js' }])
 				},
 				files: [
 					{ expand: true, flatten: true, src: [o.input+'breakpoints/*.html'], dest: o.output+'breakpoints/' }
@@ -40,10 +43,7 @@ module.exports = function(grunt){
 			},
 			breakpoints_min: {
 				options: {
-					patterns: o.replace.slice().concat([
-						{ match: 'file', replacement: '../../<%= pkg.name %>.min.js' },
-						{ match: 'frame', replacement: 'frame.min.html' }
-					])
+					patterns: o.replace.slice().concat([{ match: 'file', replacement: '../../<%= pkg.name %>.min.js' }])
 				},
 				files: [{
 					expand: true, flatten: true, src: [o.input+'breakpoints/*.html'], dest: o.output+'breakpoints/',
@@ -64,8 +64,11 @@ module.exports = function(grunt){
 			}
 		},
 		qunit: {
-			test: [o.output+'*.html'],
-			breakpoints: [o.input+'breakpoints/test.html',o.input+'breakpoints/test.min.html']
+			options : {
+				'--web-security': false,
+				'--local-to-remote-url-access': true
+			},
+			test: [o.output+'*.html']
 		}
 	});
 

@@ -61,5 +61,5 @@ module.exports = function(grunt){
 		});
 
 	grunt.registerTask('readme', ['replace:release']);
-	grunt.registerTask('release', ['version','test','readme', 'copy:release','gitadd:release','gitcommit:release','gittag:release']);
+	grunt.registerTask('release', ['version','test','readme','copy:release','gitadd:release','gitcommit:release','gittag:release']);
 };

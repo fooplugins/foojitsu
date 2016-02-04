@@ -8,7 +8,7 @@
 <body>
 <div id="qunit"></div>
 <div id="qunit-fixture">
-	<iframe id="test-frame" src="@@frame"></iframe>
+	<iframe id="test-frame" src="@@breakpoint_frame"></iframe>
 </div>
 <script src="http://code.jquery.com/qunit/qunit-1.20.0.js"></script>
 <script src="@@file"></script>
@@ -22,9 +22,7 @@
 			done5 = assert.async(),
 			done6 = assert.async(),
 			$frame = FooJitsu('#test-frame');
-		console.error('testing');
 		$frame.on('load', function(){
-			console.error('loaded');
 			var $ = window.frames[0].FooJitsu,
 				$parent = $('#parent-width'),
 				$viewport = $('#viewport-width'),
