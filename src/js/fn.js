@@ -281,11 +281,11 @@
 			var el = this.get(0);
 			if (!$.is.element(el) || !el.hasAttributes()) return;
 			if ($.is.string(nameOrAttr)){
-				return $.parseAttrValue(el.getAttribute($.toHyphen(nameOrAttr)));
+				return $.parseValue(el.getAttribute($.toHyphen(nameOrAttr)));
 			} else {
 				var result = {};
 				$.each(el.attributes, function(i, attr){
-					result[$.toCamelCase(attr.name)] = $.parseAttrValue(attr.value);
+					result[$.toCamelCase(attr.name)] = $.parseValue(attr.value);
 				});
 				return result;
 			}

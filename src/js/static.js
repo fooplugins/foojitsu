@@ -254,7 +254,7 @@
 	 * @param {(string|boolean|number)} val - The attribute's string value.
 	 * @returns {(string|boolean|number|object)}
 	 */
-	$.parseAttrValue = function(val){
+	$.parseValue = function(val){
 		var result = val;
 		if (/^false$/i.test(val)) result = false;
 		else if (/^true$/i.test(val)) result = true;
@@ -318,17 +318,102 @@
 	};
 
 	/**
-	 * Convert a simple object into a parameter string. Keys and values are url encoded.
+	 * Convert between an object and a parameter string using PHP array notation. Spaces are converted to plus "+" characters.
+	 * @param {(string|object|Array)} obj - The object to convert. If a string is passed in the parameters are converted into an object.
+	 * @param {string} [prefix] - The prefix to apply to the name.
+	 * @returns {(string|object)}
+	 */
+	$.param = function(obj, prefix) {
+		if ($.is.string(obj)){
+			return $.param.parse(obj, prefix);
+		}
+		return $.param.stringify(obj, prefix);
+	};
+
+	/**
+	 * Convert an object into a parameter string using PHP notation. Spaces are converted to plus "+" characters.
 	 * @param {object} obj - The object to convert.
+	 * @param {string} [prefix] - The prefix to apply to parameter names.
 	 * @returns {string}
 	 */
-	$.param = function(obj){
-		var result = [];
-		$.each(obj, function(key, value){
-			result.push(encodeURI(key + '=' + value));
+	$.param.stringify = function(obj, prefix){
+		var str = [], arr = $.is.arrayLike(obj);
+		prefix = $.is.string(prefix) ? prefix : '';
+		$.each(obj, function(name, value){
+			name = arr ? prefix + '[]' : (prefix !== '' ? prefix + '[' + name + ']' : name);
+			str.push(typeof value === 'object' ? $.param(value, name) : $.param.encode(name) + "=" + $.param.encode(value));
 		});
-		if (result.length === 0) return null;
-		return result.join('&');
+		return str.join("&");
+	};
+
+	/**
+	 * Convert a PHP notation parameter string to an object or array. "%20" and "+" characters are converted to spaces.
+	 * @param {string} str - The parameter string to convert, this can be a full url.
+	 * @param {string} [prefix] - The prefix to use when generating properties.
+	 * @returns {(Array|object)}
+	 */
+	$.param.parse = function(str, prefix){
+		str = str.split('#')[0];
+		str = '?' + (str.indexOf('?') !== -1 ? str.split('?')[1] : str);
+		var result = {};
+		$.each(str.substr(1).split('&'), function(i, param){
+			var parts = param.split('=');
+			if (parts.length !== 2) return;
+			var name = $.param.decode(parts[0]),
+				value = $.param.decode(parts[1]),
+				regex = /\[(.+?)?]/g;
+
+			if (regex.test(name)){
+				regex.lastIndex = 0;
+				var arr = /\[]/.test(name), current = result, path = [], match, last;
+				while ((match = regex.exec(name)) !== null) {
+					if ($.is.string(match[1])) path.push(match[1]);
+				}
+				var prefixed = $.is.string(prefix);
+				name = name.replace(regex, '');
+				if (!prefixed) path.unshift(name);
+				if (prefixed) path.unshift(prefix);
+				last = path.length - 1;
+				$.each(path, function(i, n){
+					if (i === last){
+						if (arr){
+							if (n === '' && !prefixed){
+								n = 'array';
+								current.ARRAY_RESULT = true;
+							}
+							if ($.is.array(current[n])) current[n].push(value);
+							else current[n] = [value];
+						} else {
+							current[n] = value;
+						}
+					} else {
+						if ($.is.undef(current[n])) current[n] = {};
+						current = current[n];
+					}
+				});
+			} else {
+				result[name] = value;
+			}
+		});
+		return result.ARRAY_RESULT ? result.array : result;
+	};
+
+	/**
+	 * URL parameter encodes the supplied string. Spaces are converted to plus "+" characters.
+	 * @param {string} str - The string to encode.
+	 * @returns {string}
+	 */
+	$.param.encode = function(str){
+		return encodeURIComponent(str).replace(/%20/g, '+');
+	};
+
+	/**
+	 * URL parameter decodes the supplied string. Pluses are converted to space " " characters.
+	 * @param {string} str - The string to decode.
+	 * @returns {string}
+	 */
+	$.param.decode = function(str){
+		return $.is.string(str) ? decodeURIComponent(str.replace(/\+/g, '%20')) : str + '';
 	};
 
 })(FooJitsu);

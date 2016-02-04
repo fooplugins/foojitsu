@@ -53,7 +53,7 @@
 				var attributes = {};
 				$.each(el.attributes, function(i, attr){
 					if (attr.name.substr(0, 5) === 'data-'){
-						attributes[$.toCamelCase(attr.name.substr(5))] = $.parseAttrValue(attr.value);
+						attributes[$.toCamelCase(attr.name.substr(5))] = $.parseValue(attr.value);
 					}
 				});
 				this.data[id] = $.extend(true, this.data[id], attributes);

@@ -144,14 +144,14 @@
 		assert.equal(result[1], 'two', 'split(" one   two  three ") - string @ index 1');
 		assert.equal(result[2], 'three', 'split(" one   two  three ") - string @ index 2');
 	});
-	QUnit.test('parseAttrValue', function(assert){
-		assert.equal(FooJitsu.parseAttrValue('1'), 1, 'parseAttrValue("1") - number');
-		assert.equal(FooJitsu.parseAttrValue('1px'), '1px', 'parseAttrValue("1px") - string');
-		assert.equal(FooJitsu.parseAttrValue('false'), false, 'parseAttrValue("false") - bool');
-		assert.equal(FooJitsu.parseAttrValue('FALSE'), false, 'parseAttrValue("FALSE") - bool');
-		assert.equal(FooJitsu.parseAttrValue('true'), true, 'parseAttrValue("true") - bool');
-		assert.equal(FooJitsu.parseAttrValue('TRUE'), true, 'parseAttrValue("TRUE") - bool');
-		assert.propEqual(FooJitsu.parseAttrValue('{"json": true}'), {json: true}, 'parseAttrValue("{json:true}") - json');
+	QUnit.test('parseValue', function(assert){
+		assert.equal(FooJitsu.parseValue('1'), 1, 'parseValue("1") - number');
+		assert.equal(FooJitsu.parseValue('1px'), '1px', 'parseValue("1px") - string');
+		assert.equal(FooJitsu.parseValue('false'), false, 'parseValue("false") - bool');
+		assert.equal(FooJitsu.parseValue('FALSE'), false, 'parseValue("FALSE") - bool');
+		assert.equal(FooJitsu.parseValue('true'), true, 'parseValue("true") - bool');
+		assert.equal(FooJitsu.parseValue('TRUE'), true, 'parseValue("TRUE") - bool');
+		assert.propEqual(FooJitsu.parseValue('{"json": true}'), {json: true}, 'parseValue("{json:true}") - json');
 	});
 	QUnit.test('each', function(assert){
 		assert.expect(32);
@@ -274,6 +274,42 @@
 				child4 = document.querySelector('#child-4');
 		assert.ok(FooJitsu.isChildOf(child1, root), 'isChildOf(child, root)');
 		assert.notOk(FooJitsu.isChildOf(child4, root), 'isChildOf(notChild, root)');
+	});
+	QUnit.test('param.encode', function(assert){
+		assert.equal(FooJitsu.param.encode(), 'undefined', 'undefined');
+		assert.equal(FooJitsu.param.encode(null), 'null', 'null');
+		assert.equal(FooJitsu.param.encode('string'), 'string', 'string');
+		assert.equal(FooJitsu.param.encode('string with spaces'), 'string+with+spaces', 'string with spaces');
+		assert.equal(FooJitsu.param.encode('string with +'), 'string+with+%2B', 'string with +');
+		assert.equal(FooJitsu.param.encode(true), 'true', 'true');
+		assert.equal(FooJitsu.param.encode(1234), '1234', '1234');
+	});
+	QUnit.test('param.decode', function(assert){
+		assert.equal(FooJitsu.param.decode(), 'undefined', 'undefined');
+		assert.equal(FooJitsu.param.decode(null), 'null', 'null');
+		assert.equal(FooJitsu.param.decode('string'), 'string', 'string');
+		assert.equal(FooJitsu.param.decode('string+with+spaces'), 'string with spaces', 'string with spaces');
+		assert.equal(FooJitsu.param.decode('string+with+%2B'), 'string with +', 'string with +');
+		assert.equal(FooJitsu.param.decode(true), 'true', 'true');
+		assert.equal(FooJitsu.param.decode(1234), '1234', '1234');
+	});
+	QUnit.test('param', function(assert){
+		assert.equal(FooJitsu.param(), '', 'undefined');
+		assert.equal(FooJitsu.param(null), '', 'null');
+		assert.equal(FooJitsu.param({string: "test"}), 'string=test', '{string: "test"}');
+		assert.equal(FooJitsu.param({string: "test space"}), 'string=test+space', '{string: "test space"}');
+		assert.equal(FooJitsu.param(["one","two","three"]), '%5B%5D=one&%5B%5D=two&%5B%5D=three', '["one","two","three"]');
+		assert.equal(FooJitsu.param(["one","two","three"], 'prefix'), 'prefix%5B%5D=one&prefix%5B%5D=two&prefix%5B%5D=three', '["one","two","three"], "prefix"');
+		assert.equal(FooJitsu.param({prop:["one","two","three"]}), 'prop%5B%5D=one&prop%5B%5D=two&prop%5B%5D=three', '{prop:["one","two","three"]}');
+		assert.equal(FooJitsu.param({prop:["one","two","three"]}, 'prefix'), 'prefix%5Bprop%5D%5B%5D=one&prefix%5Bprop%5D%5B%5D=two&prefix%5Bprop%5D%5B%5D=three', '{prop:["one","two","three"]}');
+		assert.deepEqual(FooJitsu.param('string'), {}, 'string');
+		assert.deepEqual(FooJitsu.param('string=test'), {string: "test"}, 'string=test');
+		assert.deepEqual(FooJitsu.param('string=test%20space'), {string: "test space"}, 'string=test%20space');
+		assert.deepEqual(FooJitsu.param('string=test+plus'), {string: "test plus"}, 'string=test+plus');
+		assert.deepEqual(FooJitsu.param('%5B%5D=one&%5B%5D=two&%5B%5D=three'), ["one","two","three"], '%5B%5D=one&%5B%5D=two&%5B%5D=three');
+		assert.deepEqual(FooJitsu.param('prefix%5B%5D=one&prefix%5B%5D=two&prefix%5B%5D=three'), {prefix: ["one","two","three"]}, 'prefix%5B%5D=one&prefix%5B%5D=two&prefix%5B%5D=three');
+		assert.deepEqual(FooJitsu.param('prop%5B%5D=one&prop%5B%5D=two&prop%5B%5D=three'), {prop:["one","two","three"]}, 'prop%5B%5D=one&prop%5B%5D=two&prop%5B%5D=three');
+		assert.deepEqual(FooJitsu.param('prefix%5Bprop%5D%5B%5D=one&prefix%5Bprop%5D%5B%5D=two&prefix%5Bprop%5D%5B%5D=three'), {prefix:{prop:["one","two","three"]}}, 'prefix%5Bprop%5D%5B%5D=one&prefix%5Bprop%5D%5B%5D=two&prefix%5Bprop%5D%5B%5D=three');
 	});
 </script>
 </body>
